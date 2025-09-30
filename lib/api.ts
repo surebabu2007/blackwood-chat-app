@@ -5,11 +5,26 @@ const API_BASE_URL = 'https://api-relay.applied-ai.zynga.com/v0/chat/low_level_c
 const BEARER_TOKEN = 'v0_25814740';
 
 export class ClaudeAPI {
-  private static async makeRequest(request: ClaudeAPIRequest): Promise<APIResponse> {
+  private static cache = new Map<string, { data: APIResponse; timestamp: number }>();
+  private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private static readonly MAX_RETRIES = 3;
+  private static readonly RETRY_DELAY = 1000; // 1 second
+
+  private static async makeRequest(request: ClaudeAPIRequest, retryCount = 0): Promise<APIResponse> {
     try {
+      // Create cache key from request
+      const cacheKey = JSON.stringify(request);
+      const cached = this.cache.get(cacheKey);
+      
+      // Return cached response if still valid
+      if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+        console.log('📦 Using cached response');
+        return cached.data;
+      }
+
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // Reduced to 15 seconds
       
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
@@ -27,16 +42,28 @@ export class ClaudeAPI {
         const errorText = await response.text();
         console.error('❌ API Error:', response.status, response.statusText);
         console.error('❌ Error details:', errorText);
+        
+        // Retry on server errors
+        if (response.status >= 500 && retryCount < this.MAX_RETRIES) {
+          console.log(`🔄 Retrying request (${retryCount + 1}/${this.MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
+          return this.makeRequest(request, retryCount + 1);
+        }
+        
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      
-      return {
+      const result = {
         success: true,
         message: 'Request successful',
         data: data
       };
+      
+      // Cache successful response
+      this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
+      
+      return result;
     } catch (error) {
       console.error('❌ API request error:', error);
       
@@ -44,6 +71,10 @@ export class ClaudeAPI {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           errorMessage = 'Request timeout - please try again';
+        } else if (retryCount < this.MAX_RETRIES) {
+          console.log(`🔄 Retrying request (${retryCount + 1}/${this.MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
+          return this.makeRequest(request, retryCount + 1);
         } else {
           errorMessage = error.message;
         }

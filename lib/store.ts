@@ -113,9 +113,13 @@ export const useChatStore = create<ChatStore>()(
             return state;
           }
           
+          // Limit messages to prevent memory leaks (keep last 50 messages)
+          const messages = [...conversation.messages, message];
+          const limitedMessages = messages.length > 50 ? messages.slice(-50) : messages;
+          
           const updatedConversation = {
             ...conversation,
-            messages: [...conversation.messages, message],
+            messages: limitedMessages,
             lastMessageAt: new Date(),
             context: {
               ...conversation.context,
