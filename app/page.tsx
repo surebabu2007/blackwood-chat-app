@@ -70,9 +70,9 @@ export default function HomePage() {
       }}
     >
       {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/85 to-black/90 backdrop-blur-md"></div>
       {/* Header */}
-      <header className="bg-black/60 backdrop-blur-sm border-b border-amber-600/30 sticky top-0 z-50">
+      <header className="bg-black/85 backdrop-blur-md border-b border-amber-600/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
@@ -93,7 +93,7 @@ export default function HomePage() {
               {/* Investigation Panel Toggle - Hidden on mobile */}
               <button
                 onClick={() => setShowInvestigationPanel(!showInvestigationPanel)}
-                className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-200 hover:text-amber-100 bg-amber-900/40 hover:bg-amber-800/50 rounded-lg transition-colors border border-amber-700/30"
+                className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
               >
                 <Menu className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Investigation</span>
@@ -102,7 +102,7 @@ export default function HomePage() {
               {/* Reset Game */}
               <button
                 onClick={handleResetGame}
-                className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-200 hover:text-amber-100 bg-amber-900/40 hover:bg-amber-800/50 rounded-lg transition-colors border border-amber-700/30"
+                className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
                 title="Reset Game"
               >
                 <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
@@ -112,7 +112,7 @@ export default function HomePage() {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-200 hover:text-amber-100 bg-amber-900/40 hover:bg-amber-800/50 rounded-lg transition-colors border border-amber-700/30"
+                className="lg:hidden flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
               >
                 {showMobileMenu ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
@@ -139,7 +139,7 @@ export default function HomePage() {
               initial={{ opacity: 0, x: -300 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -300 }}
-              className="w-80 sm:w-96 h-full bg-black/80 backdrop-blur-sm border-r border-amber-600/30 overflow-y-auto"
+              className="w-80 sm:w-96 h-full bg-black/90 backdrop-blur-md border-r border-amber-600/20 overflow-y-auto"
             >
               <CharacterSelector
                 characters={characters}
@@ -213,7 +213,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 300 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 300 }}
-            className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm border-t border-amber-600/30 max-h-[60vh] overflow-y-auto"
+            className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-amber-600/20 max-h-[60vh] overflow-y-auto"
           >
             <InvestigationPanel
               investigationState={investigationState}

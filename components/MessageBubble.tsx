@@ -47,9 +47,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const getMessageColor = () => {
-    if (isUser) return 'bg-amber-600 text-amber-100 border border-amber-500/30';
-    if (isSystem) return 'bg-amber-800 text-amber-100 border border-amber-600/30';
-    return 'bg-amber-900/60 text-amber-100 border border-amber-700/30 backdrop-blur-sm';
+    if (isUser) return 'bg-amber-600/80 text-amber-100 border border-amber-500/30 backdrop-blur-sm';
+    if (isSystem) return 'bg-amber-800/80 text-amber-100 border border-amber-600/30 backdrop-blur-sm';
+    return 'bg-black/70 text-amber-100 border border-amber-600/30 backdrop-blur-sm';
   };
 
   return (
@@ -61,11 +61,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     >
       <div className={`flex max-w-[85%] sm:max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end space-x-2`}>
         {/* Avatar */}
-        {!isUser && !isSystem && (
+        {(isUser || (!isUser && !isSystem)) && (
           <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden">
             <img 
-              src={characterAvatar || '/images/characters/default.png'} 
-              alt={characterName || 'Character'}
+              src={isUser ? '/images/characters/detective.png' : (characterAvatar || '/images/characters/default.png')} 
+              alt={isUser ? 'Detective' : (characterName || 'Character')}
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -73,7 +73,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               }}
             />
             <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs" style={{display: 'none'}}>
-              {characterAvatar?.includes('/images/') ? '👤' : characterAvatar || '👤'}
+              {isUser ? '🕵️' : (characterAvatar?.includes('/images/') ? '👤' : characterAvatar || '👤')}
             </div>
           </div>
         )}
@@ -81,9 +81,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Message content */}
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           {/* Character name */}
-          {!isUser && !isSystem && characterName && (
+          {(isUser || (!isUser && !isSystem && characterName)) && (
             <span className="text-xs text-amber-300 mb-1 px-2 truncate max-w-[200px] sm:max-w-none">
-              {characterName}
+              {isUser ? 'Detective Sarah Chen' : characterName}
             </span>
           )}
           

@@ -18,12 +18,12 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   isAvailable = true
 }) => {
   const colorClasses = {
-    james: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
-    marcus: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
-    elena: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
-    lily: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
-    thompson: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
-    victoria: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40'
+    james: 'border-amber-600/40 bg-black/70 hover:bg-black/80',
+    marcus: 'border-amber-600/40 bg-black/70 hover:bg-black/80',
+    elena: 'border-amber-600/40 bg-black/70 hover:bg-black/80',
+    lily: 'border-amber-600/40 bg-black/70 hover:bg-black/80',
+    thompson: 'border-amber-600/40 bg-black/70 hover:bg-black/80',
+    victoria: 'border-amber-600/40 bg-black/70 hover:bg-black/80'
   };
 
   const selectedClasses = isSelected ? 'ring-2 ring-amber-400/50 scale-105' : '';
@@ -38,7 +38,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         character-card relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-300
         ${colorClasses[character.color as keyof typeof colorClasses]}
         ${selectedClasses}
-        hover:scale-[1.02] hover:shadow-lg hover:border-amber-400/50
+        hover:scale-[1.02] hover:shadow-lg hover:border-amber-500/60
       `}
       onClick={onClick}
     >

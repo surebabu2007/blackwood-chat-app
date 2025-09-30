@@ -49,7 +49,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="sticky bottom-0 bg-black/80 backdrop-blur-sm border-t border-amber-600/30 p-3 sm:p-4"
+      className="sticky bottom-0 bg-black/90 backdrop-blur-md border-t border-amber-600/20 p-3 sm:p-4"
     >
       <form onSubmit={handleSubmit} className="flex items-end space-x-2 sm:space-x-3">
         <div className="flex-1 relative">
@@ -68,9 +68,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             aria-label="Type your message"
             aria-describedby="message-help"
             className={`
-              chat-input w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-amber-900/30 border border-amber-600/50 rounded-xl sm:rounded-2xl
-              text-amber-100 placeholder-amber-300/70 resize-none focus:outline-none focus:ring-2
-              focus:ring-amber-500 focus:border-amber-400 transition-all duration-200
+              chat-input w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12               bg-black/60 border border-amber-600/30 rounded-xl sm:rounded-2xl
+              text-amber-100 placeholder-amber-400/60 resize-none focus:outline-none focus:ring-2
+              focus:ring-amber-500/50 focus:border-amber-500/40 transition-all duration-200
               max-h-32 min-h-[2.5rem] sm:min-h-[3rem] text-sm sm:text-base backdrop-blur-sm
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               ${isTyping ? 'opacity-75' : ''}
@@ -95,8 +95,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           className={`
             flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl transition-all duration-200
             ${message.trim() && !disabled && !isTyping
-              ? 'bg-amber-600 hover:bg-amber-700 text-amber-100 border border-amber-500/50'
-              : 'bg-amber-900/40 text-amber-600/50 cursor-not-allowed border border-amber-700/30'
+              ? 'bg-amber-600/80 hover:bg-amber-700/90 text-amber-100 border border-amber-500/40'
+              : 'bg-black/70 text-amber-600/50 cursor-not-allowed border border-amber-700/20'
             }
           `}
         >
