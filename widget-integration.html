@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blackwood Manor Widget Integration</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+    <!-- Embed the widget in your game -->
+    <div id="blackwood-widget"></div>
+    
+    <script>
+        // Widget integration script
+        (function() {
+            const widgetConfig = {
+                apiUrl: 'https://your-amplify-url.amplifyapp.com',
+                position: 'bottom-right',
+                theme: 'sepia',
+                characters: ['james', 'marcus', 'elena', 'lily', 'thompson'],
+                enableVoice: true
+            };
+            
+            // Create iframe for widget
+            const iframe = document.createElement('iframe');
+            iframe.src = `${widgetConfig.apiUrl}/widget-demo?config=${encodeURIComponent(JSON.stringify(widgetConfig))}`;
+            iframe.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 400px;
+                height: 600px;
+                border: none;
+                z-index: 9999;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            `;
+            
+            document.getElementById('blackwood-widget').appendChild(iframe);
+            
+            // Widget API for your game
+            window.BlackwoodWidget = {
+                show: () => iframe.style.display = 'block',
+                hide: () => iframe.style.display = 'none',
+                selectCharacter: (characterId) => {
+                    iframe.contentWindow.postMessage({
+                        type: 'SELECT_CHARACTER',
+                        characterId: characterId
+                    }, '*');
+                },
+                sendMessage: (message) => {
+                    iframe.contentWindow.postMessage({
+                        type: 'SEND_MESSAGE',
+                        message: message
+                    }, '*');
+                }
+            };
+            
+            // Listen for widget events
+            window.addEventListener('message', (event) => {
+                if (event.origin !== widgetConfig.apiUrl) return;
+                
+                switch(event.data.type) {
+                    case 'CHARACTER_SELECTED':
+                        console.log('Character selected:', event.data.character);
+                        break;
+                    case 'MESSAGE_SENT':
+                        console.log('Message sent:', event.data.message);
+                        break;
+                    case 'EVIDENCE_FOUND':
+                        console.log('Evidence found:', event.data.evidence);
+                        // Update your game state
+                        break;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
