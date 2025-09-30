@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   description: 'An immersive interactive chatbot experience for the Blackwood Manor murder mystery',
   keywords: ['murder mystery', 'interactive fiction', 'chatbot', 'investigation'],
   authors: [{ name: 'Blackwood Manor Team' }],
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
