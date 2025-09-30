@@ -63,40 +63,41 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-blackwood-900 via-blackwood-800 to-blackwood-900">
       {/* Header */}
       <header className="bg-blackwood-800/50 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-white">
-                Blackwood Manor Investigation
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-bold text-white truncate">
+                Blackwood Manor
               </h1>
-              <div className="hidden md:block text-sm text-gray-400">
-                Interactive Murder Mystery
+              <div className="hidden sm:block text-xs sm:text-sm text-gray-400">
+                Investigation
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Investigation Panel Toggle */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Investigation Panel Toggle - Hidden on mobile */}
               <button
                 onClick={() => setShowInvestigationPanel(!showInvestigationPanel)}
-                className="hidden md:flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
+                className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
               >
-                <Menu className="w-4 h-4 mr-2" />
-                Investigation
+                <Menu className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Investigation</span>
               </button>
               
               {/* Reset Game */}
               <button
                 onClick={handleResetGame}
-                className="flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
+                className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
+                title="Reset Game"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset
+                <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Reset</span>
               </button>
               
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="md:hidden flex items-center px-3 py-2 text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
+                className="lg:hidden flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded-lg transition-colors"
               >
                 {showMobileMenu ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
@@ -105,9 +106,9 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)]">
         {/* Character Selector - Desktop */}
-        <div className="hidden md:block w-80 border-r border-gray-700 overflow-y-auto">
+        <div className="hidden lg:block w-80 border-r border-gray-700 overflow-y-auto">
           <CharacterSelector
             characters={characters}
             selectedCharacter={currentCharacter}
@@ -118,12 +119,12 @@ export default function HomePage() {
 
         {/* Mobile Character Selector */}
         {showMobileMenu && (
-          <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
+          <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, x: -300 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -300 }}
-              className="w-80 h-full bg-blackwood-800 border-r border-gray-700 overflow-y-auto"
+              className="w-80 sm:w-96 h-full bg-blackwood-800 border-r border-gray-700 overflow-y-auto"
             >
               <CharacterSelector
                 characters={characters}
@@ -159,7 +160,7 @@ export default function HomePage() {
 
         {/* Investigation Panel - Desktop */}
         {showInvestigationPanel && (
-          <div className="hidden md:block w-80 border-l border-gray-700 overflow-y-auto">
+          <div className="hidden lg:block w-80 border-l border-gray-700 overflow-y-auto">
             <InvestigationPanel
               investigationState={investigationState}
               gameState={gameState}
@@ -192,12 +193,12 @@ export default function HomePage() {
 
       {/* Mobile Investigation Panel */}
       {showInvestigationPanel && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
+        <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, y: 300 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 300 }}
-            className="absolute bottom-0 left-0 right-0 bg-blackwood-800 border-t border-gray-700 max-h-[50vh] overflow-y-auto"
+            className="absolute bottom-0 left-0 right-0 bg-blackwood-800 border-t border-gray-700 max-h-[60vh] overflow-y-auto"
           >
             <InvestigationPanel
               investigationState={investigationState}

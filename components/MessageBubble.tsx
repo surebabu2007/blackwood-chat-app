@@ -41,9 +41,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const getMessageIcon = () => {
-    if (isUser) return <User className="w-4 h-4" />;
-    if (isSystem) return <AlertCircle className="w-4 h-4" />;
-    return <Bot className="w-4 h-4" />;
+    if (isUser) return <User className="w-3 h-3 sm:w-4 sm:h-4" />;
+    if (isSystem) return <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />;
+    return <Bot className="w-3 h-3 sm:w-4 sm:h-4" />;
   };
 
   const getMessageColor = () => {
@@ -59,10 +59,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       transition={{ duration: 0.3 }}
       className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}
     >
-      <div className={`flex max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end space-x-2`}>
+      <div className={`flex max-w-[85%] sm:max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end space-x-2`}>
         {/* Avatar */}
         {!isUser && !isSystem && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
+          <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden">
             <img 
               src={characterAvatar || '/images/characters/default.png'} 
               alt={characterName || 'Character'}
@@ -82,7 +82,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           {/* Character name */}
           {!isUser && !isSystem && characterName && (
-            <span className="text-xs text-gray-400 mb-1 px-2">
+            <span className="text-xs text-gray-400 mb-1 px-2 truncate max-w-[200px] sm:max-w-none">
               {characterName}
             </span>
           )}
@@ -90,7 +90,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {/* Message bubble */}
           <div
             className={`
-              relative px-4 py-2 rounded-2xl shadow-lg
+              relative px-3 py-2 sm:px-4 rounded-xl sm:rounded-2xl shadow-lg
               ${getMessageColor()}
               ${isUser ? 'rounded-br-md' : 'rounded-bl-md'}
             `}
@@ -103,7 +103,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 </div>
               )}
               <div className="flex-1">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm sm:text-sm leading-relaxed whitespace-pre-wrap break-words">
                   {message.content}
                 </p>
               </div>

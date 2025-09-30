@@ -24,8 +24,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-blackwood-900 text-white min-h-screen`}>
-        <div className="min-h-screen bg-gradient-to-br from-blackwood-900 via-blackwood-800 to-blackwood-900">
+      <body className={`${inter.className} bg-blackwood-900 text-white min-h-screen touch-manipulation mobile-tap-highlight`}>
+        <div className="min-h-screen bg-gradient-to-br from-blackwood-900 via-blackwood-800 to-blackwood-900 safe-area-inset">
           {children}
           <PerformanceMonitor />
         </div>

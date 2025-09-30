@@ -29,18 +29,18 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [messages, isTyping]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto mobile-scroll p-3 sm:p-4 space-y-3 sm:space-y-4">
       {messages.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center justify-center h-full text-center"
         >
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold text-white mb-2">
+          <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">🔍</div>
+          <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 px-4">
             Welcome to Blackwood Manor
           </h3>
-          <p className="text-gray-400 max-w-md">
+          <p className="text-gray-400 max-w-md text-sm sm:text-base px-4">
             Select a character to begin your investigation. Each character has their own secrets, 
             motivations, and knowledge about the case.
           </p>

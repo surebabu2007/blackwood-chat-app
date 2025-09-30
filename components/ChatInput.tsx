@@ -49,9 +49,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="sticky bottom-0 bg-blackwood-900/95 backdrop-blur-sm border-t border-gray-700 p-4"
+      className="sticky bottom-0 bg-blackwood-900/95 backdrop-blur-sm border-t border-gray-700 p-3 sm:p-4"
     >
-      <form onSubmit={handleSubmit} className="flex items-end space-x-3">
+      <form onSubmit={handleSubmit} className="flex items-end space-x-2 sm:space-x-3">
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -68,10 +68,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             aria-label="Type your message"
             aria-describedby="message-help"
             className={`
-              chat-input w-full px-4 py-3 pr-12 bg-gray-800 border border-gray-600 rounded-2xl
+              chat-input w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-gray-800 border border-gray-600 rounded-xl sm:rounded-2xl
               text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2
               focus:ring-blue-500 focus:border-transparent transition-all duration-200
-              max-h-32 min-h-[3rem]
+              max-h-32 min-h-[2.5rem] sm:min-h-[3rem] text-sm sm:text-base
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               ${isTyping ? 'opacity-75' : ''}
             `}
@@ -81,7 +81,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           
           {/* Character limit indicator */}
           {message.length > 0 && (
-            <div className="absolute bottom-1 right-14 text-xs text-gray-500">
+            <div className="absolute bottom-1 right-10 sm:right-14 text-xs text-gray-500">
               {message.length}/500
             </div>
           )}
@@ -93,7 +93,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={`
-            flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-200
+            flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl transition-all duration-200
             ${message.trim() && !disabled && !isTyping
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : 'bg-gray-700 text-gray-500 cursor-not-allowed'
@@ -101,9 +101,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           `}
         >
           {isTyping ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
           ) : (
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           )}
         </motion.button>
       </form>
@@ -113,14 +113,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center space-x-2 mt-2 text-sm text-gray-400"
+          className="flex items-center space-x-2 mt-2 text-xs sm:text-sm text-gray-400"
         >
           <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"></div>
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
           </div>
-          <span>{characterName || 'Character'} is typing...</span>
+          <span className="truncate">{characterName || 'Character'} is typing...</span>
         </motion.div>
       )}
     </motion.div>
