@@ -8,6 +8,8 @@ import { ChatInput } from '@/components/ChatInput';
 import { InvestigationPanel } from '@/components/InvestigationPanel';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { NetworkStatus } from '@/components/NetworkStatus';
+import { DebugPanel } from '@/components/DebugPanel';
 import { useChat } from '@/hooks/useChat';
 import { useChatStore } from '@/lib/store';
 import { motion } from 'framer-motion';
@@ -71,6 +73,9 @@ export default function HomePage() {
     >
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/85 to-black/90 backdrop-blur-md"></div>
+      
+      {/* Network Status */}
+      <NetworkStatus />
       {/* Header */}
       <header className="bg-black/85 backdrop-blur-md border-b border-amber-600/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -224,6 +229,9 @@ export default function HomePage() {
           </motion.div>
         </div>
       )}
+      
+      {/* Debug Panel - Only in development */}
+      <DebugPanel />
     </div>
   );
 }

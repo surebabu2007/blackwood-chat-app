@@ -1,8 +1,8 @@
 import { ClaudeAPIRequest, APIResponse, Character, Message } from './types';
 import { victoriaBlackwood } from './victimData';
 
-const API_BASE_URL = 'https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse';
-const BEARER_TOKEN = 'v0_25814740';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse';
+const BEARER_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || 'v0_25814740';
 
 export class ClaudeAPI {
   private static cache = new Map<string, { data: APIResponse; timestamp: number }>();
@@ -31,9 +31,14 @@ export class ClaudeAPI {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${BEARER_TOKEN}`,
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'User-Agent': 'BlackwoodManor-ChatApp/1.0.0'
         },
         body: JSON.stringify(request),
-        signal: controller.signal
+        signal: controller.signal,
+        mode: 'cors',
+        credentials: 'omit'
       });
       
       clearTimeout(timeoutId);
@@ -64,28 +69,33 @@ export class ClaudeAPI {
       this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
       
       return result;
-    } catch (error) {
-      console.error('❌ API request error:', error);
-      
-      let errorMessage = 'Unknown error';
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          errorMessage = 'Request timeout - please try again';
-        } else if (retryCount < this.MAX_RETRIES) {
-          console.log(`🔄 Retrying request (${retryCount + 1}/${this.MAX_RETRIES})`);
-          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
-          return this.makeRequest(request, retryCount + 1);
-        } else {
-          errorMessage = error.message;
+        } catch (error) {
+          console.error('❌ API request error:', error);
+          
+          let errorMessage = 'Unknown error';
+          if (error instanceof Error) {
+            if (error.name === 'AbortError') {
+              errorMessage = 'Request timeout - please try again';
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+              errorMessage = 'Network error - please check your internet connection';
+            } else if (error.name === 'NetworkError') {
+              errorMessage = 'Network unavailable - please check your connection';
+            } else if (retryCount < this.MAX_RETRIES) {
+              console.log(`🔄 Retrying request (${retryCount + 1}/${this.MAX_RETRIES})`);
+              await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
+              return this.makeRequest(request, retryCount + 1);
+            } else {
+              errorMessage = error.message;
+            }
+          }
+          
+          return {
+            success: false,
+            message: 'Request failed',
+            error: errorMessage,
+            retryable: retryCount < this.MAX_RETRIES
+          };
         }
-      }
-      
-      return {
-        success: false,
-        message: 'Request failed',
-        error: errorMessage
-      };
-    }
   }
 
   static async generateCharacterResponse(
