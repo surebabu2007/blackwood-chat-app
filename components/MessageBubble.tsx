@@ -47,9 +47,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const getMessageColor = () => {
-    if (isUser) return 'bg-blue-600 text-white';
-    if (isSystem) return 'bg-yellow-600 text-white';
-    return 'bg-gray-700 text-white';
+    if (isUser) return 'bg-amber-600 text-amber-100 border border-amber-500/30';
+    if (isSystem) return 'bg-amber-800 text-amber-100 border border-amber-600/30';
+    return 'bg-amber-900/60 text-amber-100 border border-amber-700/30 backdrop-blur-sm';
   };
 
   return (
@@ -82,7 +82,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           {/* Character name */}
           {!isUser && !isSystem && characterName && (
-            <span className="text-xs text-gray-400 mb-1 px-2 truncate max-w-[200px] sm:max-w-none">
+            <span className="text-xs text-amber-300 mb-1 px-2 truncate max-w-[200px] sm:max-w-none">
               {characterName}
             </span>
           )}
@@ -118,7 +118,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
           
           {/* Timestamp */}
-          <span className="text-xs text-gray-500 mt-1 px-2">
+          <span className="text-xs text-amber-400/70 mt-1 px-2">
             {formatTime(message.timestamp)}
           </span>
         </div>

@@ -18,15 +18,15 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   isAvailable = true
 }) => {
   const colorClasses = {
-    james: 'border-james-500 bg-james-900/20 hover:bg-james-800/30',
-    marcus: 'border-marcus-500 bg-marcus-900/20 hover:bg-marcus-800/30',
-    elena: 'border-elena-500 bg-elena-900/20 hover:bg-elena-800/30',
-    lily: 'border-lily-500 bg-lily-900/20 hover:bg-lily-800/30',
-    thompson: 'border-thompson-500 bg-thompson-900/20 hover:bg-thompson-800/30',
-    victoria: 'border-victoria-500 bg-victoria-900/20 hover:bg-victoria-800/30'
+    james: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
+    marcus: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
+    elena: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
+    lily: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
+    thompson: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40',
+    victoria: 'border-amber-600 bg-amber-900/30 hover:bg-amber-800/40'
   };
 
-  const selectedClasses = isSelected ? 'ring-2 ring-white/50 scale-105' : '';
+  const selectedClasses = isSelected ? 'ring-2 ring-amber-400/50 scale-105' : '';
 
   return (
     <motion.div
@@ -38,7 +38,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         character-card relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-300
         ${colorClasses[character.color as keyof typeof colorClasses]}
         ${selectedClasses}
-        hover:scale-[1.02] hover:shadow-lg hover:border-white/30
+        hover:scale-[1.02] hover:shadow-lg hover:border-amber-400/50
       `}
       onClick={onClick}
     >
@@ -63,15 +63,15 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           </div>
           
           {/* Online indicator */}
-          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-blackwood-800"></div>
+          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-black/60"></div>
         </div>
         
         {/* Character Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-white truncate">
+          <h3 className="text-base font-semibold text-amber-100 truncate">
             {character.name}
           </h3>
-          <p className="text-sm text-gray-300 truncate">
+          <p className="text-sm text-amber-200/80 truncate">
             {character.role}
           </p>
         </div>
@@ -79,7 +79,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         {/* Status Indicator */}
         <div className="flex-shrink-0">
           <div className={`w-3 h-3 rounded-full ${
-            isSelected ? 'bg-blue-500' : 'bg-gray-500'
+            isSelected ? 'bg-amber-400' : 'bg-amber-600/50'
           }`}></div>
         </div>
       </div>

@@ -37,14 +37,14 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-blackwood-800/50 backdrop-blur-sm border-b border-gray-700 p-4"
+      className="bg-black/60 backdrop-blur-sm border-b border-amber-600/30 p-4"
     >
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-amber-100">
             Interview Suspects
           </h2>
-          <div className="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded-full">
+          <div className="text-xs text-amber-300 bg-amber-900/40 px-2 py-1 rounded-full border border-amber-700/30">
             All Available
           </div>
         </div>

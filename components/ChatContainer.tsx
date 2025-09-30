@@ -37,10 +37,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           className="flex flex-col items-center justify-center h-full text-center"
         >
           <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">🔍</div>
-          <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 px-4">
+          <h3 className="text-lg sm:text-xl font-semibold text-amber-100 mb-2 px-4">
             Welcome to Blackwood Manor
           </h3>
-          <p className="text-gray-400 max-w-md text-sm sm:text-base px-4">
+          <p className="text-amber-200/80 max-w-md text-sm sm:text-base px-4">
             Select a character to begin your investigation. Each character has their own secrets, 
             motivations, and knowledge about the case.
           </p>
