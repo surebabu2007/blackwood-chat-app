@@ -1,0 +1,11 @@
+Test Deployment File
+===================
+
+This is a test file to trigger Vercel deployment.
+
+Created: October 1, 2025
+Purpose: Testing Vercel auto-deployment
+Commit: Testing build pipeline
+
+If you can see this in the deployment, everything is working!
+
