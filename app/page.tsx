@@ -13,7 +13,7 @@ import { DebugPanel } from '@/components/DebugPanel';
 import { useChat } from '@/hooks/useChat';
 import { useChatStore } from '@/lib/store';
 import { motion } from 'framer-motion';
-import { Menu, X, RotateCcw } from 'lucide-react';
+import { Menu, X, RotateCcw, Code, ExternalLink } from 'lucide-react';
 
 export default function HomePage() {
   const [showInvestigationPanel, setShowInvestigationPanel] = useState(false);
@@ -94,25 +94,36 @@ export default function HomePage() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {/* Investigation Panel Toggle - Hidden on mobile */}
-              <button
-                onClick={() => setShowInvestigationPanel(!showInvestigationPanel)}
-                className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
-              >
-                <Menu className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Investigation</span>
-              </button>
-              
-              {/* Reset Game */}
-              <button
-                onClick={handleResetGame}
-                className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
-                title="Reset Game"
-              >
-                <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Reset</span>
-              </button>
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  {/* Widget Integration Link */}
+                  <a
+                    href="/integration"
+                    target="_blank"
+                    className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
+                    title="Widget Integration Hub"
+                  >
+                    <Code className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Integration</span>
+                  </a>
+                  
+                  {/* Investigation Panel Toggle - Hidden on mobile */}
+                  <button
+                    onClick={() => setShowInvestigationPanel(!showInvestigationPanel)}
+                    className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
+                  >
+                    <Menu className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Investigation</span>
+                  </button>
+                  
+                  {/* Reset Game */}
+                  <button
+                    onClick={handleResetGame}
+                    className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
+                    title="Reset Game"
+                  >
+                    <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
               
               {/* Mobile Menu Toggle */}
               <button
@@ -146,6 +157,30 @@ export default function HomePage() {
               exit={{ opacity: 0, x: -300 }}
               className="w-80 sm:w-96 h-full bg-black/90 backdrop-blur-md border-r border-amber-600/20 overflow-y-auto"
             >
+              {/* Mobile Menu Header */}
+              <div className="p-4 border-b border-amber-600/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-amber-100">Menu</h2>
+                  <button
+                    onClick={() => setShowMobileMenu(false)}
+                    className="text-amber-400 hover:text-amber-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                {/* Integration Link for Mobile */}
+                <a
+                  href="/integration"
+                  target="_blank"
+                  className="flex items-center space-x-2 px-3 py-2 text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20 mb-4"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>Widget Integration Hub</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              
               <CharacterSelector
                 characters={characters}
                 selectedCharacter={currentCharacter}
