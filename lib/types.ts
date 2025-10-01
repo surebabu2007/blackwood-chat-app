@@ -79,6 +79,7 @@ export interface APIResponse {
   message: string;
   data?: any;
   error?: string;
+  retryable?: boolean;
 }
 
 export interface ClaudeAPIRequest {
