@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ClaudeAPI } from '@/lib/api';
 import { characters } from '@/lib/characters';
 
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Allow-Credentials': 'false',
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { character, message, conversationHistory } = await request.json();
@@ -32,18 +44,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         response: response.data.choices[0].message.content
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        },
       });
     } else {
       return NextResponse.json({
         success: false,
         error: 'Failed to generate response'
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        },
       });
     }
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        },
+      }
     );
   }
 }

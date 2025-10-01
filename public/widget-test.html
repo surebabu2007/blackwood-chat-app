@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🕵️ Blackwood Manor Widget Test</h1>
+        <p>This page tests all widget functionality to ensure it works perfectly for external game integration.</p>
+        
+        <div class="test-section">
+            <h2>Widget Loader Test</h2>
+            <button class="test-button" onclick="testWidgetLoader()">Test Widget Loader</button>
+            <button class="test-button" onclick="testWidgetCreation()">Create Widget</button>
+            <button class="test-button" onclick="testWidgetDestroy()">Destroy Widget</button>
+            <div id="loader-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Widget Controls Test</h2>
+            <button class="test-button" onclick="showWidget()">Show Widget</button>
+            <button class="test-button" onclick="hideWidget()">Hide Widget</button>
+            <button class="test-button" onclick="toggleInterrogation()">Toggle Interrogation</button>
+            <div id="controls-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Character Selection Test</h2>
+            <button class="test-button" onclick="selectCharacter('james-blackwood')">Select James</button>
+            <button class="test-button" onclick="selectCharacter('marcus-reynolds')">Select Marcus</button>
+            <button class="test-button" onclick="selectCharacter('elena-rodriguez')">Select Elena</button>
+            <button class="test-button" onclick="selectCharacter('lily-chen')">Select Lily</button>
+            <button class="test-button" onclick="selectCharacter('thompson-butler')">Select Thompson</button>
+            <div id="character-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Event System Test</h2>
+            <button class="test-button" onclick="testEvents()">Test Event System</button>
+            <div id="event-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Integration Test</h2>
+            <button class="test-button" onclick="testGameIntegration()">Test Game Integration</button>
+            <div id="integration-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <!-- Widget Integration -->
+    <div data-blackwood-widget 
+         data-position="bottom-right" 
+         data-theme="sepia" 
+         data-enable-voice="true"
+         data-show-character-selector="true">
+    </div>
+
+    <!-- Load the widget script -->
+    <script src="/widget-loader.js"></script>
+    
+    <script>
+        let widget = null;
+        let testResults = [];
+        
+        // Test functions
+        function testWidgetLoader() {
+            const status = document.getElementById('loader-status');
+            try {
+                if (typeof BlackwoodWidget !== 'undefined') {
+                    status.innerHTML = '<div class="status success">✅ Widget loader loaded successfully</div>';
+                    addTestResult('Widget Loader', true, 'Widget loader class is available');
+                } else {
+                    status.innerHTML = '<div class="status error">❌ Widget loader failed to load</div>';
+                    addTestResult('Widget Loader', false, 'Widget loader class not found');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Widget Loader', false, error.message);
+            }
+        }
+        
+        function testWidgetCreation() {
+            const status = document.getElementById('loader-status');
+            try {
+                if (typeof BlackwoodWidget !== 'undefined') {
+                    widget = new BlackwoodWidget({
+                        position: 'bottom-right',
+                        theme: 'sepia',
+                        enableVoice: true
+                    });
+                    
+                    status.innerHTML = '<div class="status success">✅ Widget created successfully</div>';
+                    addTestResult('Widget Creation', true, 'Widget instance created');
+                } else {
+                    status.innerHTML = '<div class="status error">❌ Cannot create widget - loader not available</div>';
+                    addTestResult('Widget Creation', false, 'Widget loader not available');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error creating widget: ${error.message}</div>`;
+                addTestResult('Widget Creation', false, error.message);
+            }
+        }
+        
+        function testWidgetDestroy() {
+            const status = document.getElementById('loader-status');
+            try {
+                if (widget) {
+                    widget.destroy();
+                    widget = null;
+                    status.innerHTML = '<div class="status success">✅ Widget destroyed successfully</div>';
+                    addTestResult('Widget Destroy', true, 'Widget instance destroyed');
+                } else {
+                    status.innerHTML = '<div class="status info">ℹ️ No widget to destroy</div>';
+                    addTestResult('Widget Destroy', true, 'No widget to destroy');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error destroying widget: ${error.message}</div>`;
+                addTestResult('Widget Destroy', false, error.message);
+            }
+        }
+        
+        function showWidget() {
+            const status = document.getElementById('controls-status');
+            try {
+                if (widget) {
+                    widget.show();
+                    status.innerHTML = '<div class="status success">✅ Widget shown</div>';
+                    addTestResult('Show Widget', true, 'Widget show method called');
+                } else {
+                    status.innerHTML = '<div class="status error">❌ No widget to show</div>';
+                    addTestResult('Show Widget', false, 'No widget instance');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Show Widget', false, error.message);
+            }
+        }
+        
+        function hideWidget() {
+            const status = document.getElementById('controls-status');
+            try {
+                if (widget) {
+                    widget.hide();
+                    status.innerHTML = '<div class="status success">✅ Widget hidden</div>';
+                    addTestResult('Hide Widget', true, 'Widget hide method called');
+                } else {
+                    status.innerHTML = '<div class="status error">❌ No widget to hide</div>';
+                    addTestResult('Hide Widget', false, 'No widget instance');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Hide Widget', false, error.message);
+            }
+        }
+        
+        function toggleInterrogation() {
+            const status = document.getElementById('controls-status');
+            try {
+                if (widget) {
+                    const currentMode = widget.config.isInterrogationMode;
+                    widget.setInterrogationMode(!currentMode);
+                    status.innerHTML = `<div class="status success">✅ Interrogation mode: ${!currentMode ? 'ON' : 'OFF'}</div>`;
+                    addTestResult('Toggle Interrogation', true, `Mode set to ${!currentMode ? 'ON' : 'OFF'}`);
+                } else {
+                    status.innerHTML = '<div class="status error">❌ No widget to control</div>';
+                    addTestResult('Toggle Interrogation', false, 'No widget instance');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Toggle Interrogation', false, error.message);
+            }
+        }
+        
+        function selectCharacter(characterId) {
+            const status = document.getElementById('character-status');
+            try {
+                if (widget) {
+                    widget.selectCharacter(characterId);
+                    status.innerHTML = `<div class="status success">✅ Selected character: ${characterId}</div>`;
+                    addTestResult('Select Character', true, `Selected ${characterId}`);
+                } else {
+                    status.innerHTML = '<div class="status error">❌ No widget to control</div>';
+                    addTestResult('Select Character', false, 'No widget instance');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Select Character', false, error.message);
+            }
+        }
+        
+        function testEvents() {
+            const status = document.getElementById('event-status');
+            try {
+                if (widget) {
+                    // Test event system
+                    widget.on('testEvent', (data) => {
+                        console.log('Test event received:', data);
+                    });
+                    
+                    // Simulate an event
+                    widget.emit('testEvent', { message: 'Test event data' });
+                    
+                    status.innerHTML = '<div class="status success">✅ Event system working</div>';
+                    addTestResult('Event System', true, 'Event system functional');
+                } else {
+                    status.innerHTML = '<div class="status error">❌ No widget to test events</div>';
+                    addTestResult('Event System', false, 'No widget instance');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Event System', false, error.message);
+            }
+        }
+        
+        function testGameIntegration() {
+            const status = document.getElementById('integration-status');
+            try {
+                if (widget) {
+                    // Test game integration features
+                    const gameEvents = {
+                        enterRoom: (roomId) => {
+                            console.log('Entered room:', roomId);
+                            widget.selectCharacter('thompson-butler');
+                        },
+                        startInvestigation: () => {
+                            widget.show();
+                            widget.setInterrogationMode(true);
+                        }
+                    };
+                    
+                    // Test room entry
+                    gameEvents.enterRoom('kitchen');
+                    
+                    status.innerHTML = '<div class="status success">✅ Game integration working</div>';
+                    addTestResult('Game Integration', true, 'Game integration features functional');
+                } else {
+                    status.innerHTML = '<div class="status error">❌ No widget for integration test</div>';
+                    addTestResult('Game Integration', false, 'No widget instance');
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                addTestResult('Game Integration', false, error.message);
+            }
+        }
+        
+        function addTestResult(test, passed, message) {
+            testResults.push({
+                test: test,
+                passed: passed,
+                message: message,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            updateTestResults();
+        }
+        
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('test-results');
+            const passed = testResults.filter(r => r.passed).length;
+            const total = testResults.length;
+            
+            let html = `<h3>Test Summary: ${passed}/${total} tests passed</h3>`;
+            
+            testResults.forEach(result => {
+                const statusClass = result.passed ? 'success' : 'error';
+                const icon = result.passed ? '✅' : '❌';
+                html += `<div class="status ${statusClass}">${icon} ${result.test}: ${result.message} (${result.timestamp})</div>`;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Initialize tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                testWidgetLoader();
+                setTimeout(() => {
+                    testWidgetCreation();
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

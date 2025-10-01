@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Detective Game - Blackwood Widget Integration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .game-title {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .game-subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-bottom: 30px;
+        }
+        
+        .game-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #444;
+        }
+        
+        .widget-controls {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .control-group select, .control-group button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .control-group button {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            cursor: pointer;
+            margin-right: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .control-group button:hover {
+            transform: scale(1.05);
+        }
+        
+        .widget-info {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #ffd700;
+        }
+        
+        .widget-info h3 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: #4CAF50; }
+        .status-offline { background: #f44336; }
+        
+        .demo-area {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed #666;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 30px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .demo-text {
+            color: #999;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">🕵️ Detective Mystery Game</h1>
+            <p class="game-subtitle">Your Interactive Investigation Adventure</p>
+        </div>
+        
+        <div class="game-content">
+            <div class="widget-info">
+                <h3>🕵️ Blackwood Manor Detective Widget</h3>
+                <p>Status: <span class="status-indicator status-online"></span>Online</p>
+                <p>This widget allows players to interview suspects, gather evidence, and solve the mystery. The widget will appear in the bottom-right corner of your game.</p>
+            </div>
+            
+            <div class="widget-controls">
+                <h3>Widget Controls</h3>
+                
+                <div class="control-group">
+                    <label for="character-select">Select Character to Interview:</label>
+                    <select id="character-select">
+                        <option value="">Choose a suspect...</option>
+                        <option value="james-blackwood">James Blackwood (Brother)</option>
+                        <option value="marcus-reynolds">Marcus Reynolds (Business Partner)</option>
+                        <option value="elena-rodriguez">Dr. Elena Rodriguez (Family Doctor)</option>
+                        <option value="lily-chen">Lily Chen (Niece)</option>
+                        <option value="thompson-butler">Mr. Thompson (Butler)</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>Widget Actions:</label>
+                    <button onclick="showWidget()">Show Widget</button>
+                    <button onclick="hideWidget()">Hide Widget</button>
+                    <button onclick="toggleInterrogationMode()">Toggle Interrogation Mode</button>
+                </div>
+                
+                <div class="control-group">
+                    <label for="position-select">Widget Position:</label>
+                    <select id="position-select">
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="top-left">Top Left</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="demo-area">
+                <div class="demo-text">
+                    🎮 Your game content goes here<br>
+                    The detective widget will overlay on top of your game<br>
+                    Players can interact with suspects while playing
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Widget Integration -->
+    <div data-blackwood-widget 
+         data-position="bottom-right" 
+         data-theme="sepia" 
+         data-enable-voice="true"
+         data-show-character-selector="true">
+    </div>
+
+    <!-- Load the widget script -->
+    <script src="/widget-loader.js"></script>
+    
+    <script>
+        // Game-specific widget integration
+        let widget = null;
+        
+        // Wait for widget to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize widget when ready
+            setTimeout(() => {
+                if (window.BlackwoodWidget) {
+                    widget = window.BlackwoodWidget;
+                    setupWidgetEvents();
+                }
+            }, 1000);
+        });
+        
+        function setupWidgetEvents() {
+            if (!widget) return;
+            
+            // Listen for widget events
+            widget.on('characterSelected', (character) => {
+                console.log('Character selected in game:', character.name);
+                // Update your game state here
+                updateGameState('character_interviewed', character.id);
+            });
+            
+            widget.on('messageSent', (data) => {
+                console.log('Message sent to character:', data.message);
+                // Track player interactions
+                updateGameState('message_sent', data);
+            });
+            
+            widget.on('evidenceFound', (evidence) => {
+                console.log('Evidence discovered:', evidence);
+                // Update game inventory or progress
+                updateGameState('evidence_found', evidence);
+            });
+            
+            widget.on('investigationProgress', (progress) => {
+                console.log('Investigation progress:', progress);
+                // Update game progress
+                updateGameState('investigation_progress', progress);
+            });
+        }
+        
+        function updateGameState(action, data) {
+            // Your game state management logic here
+            console.log('Game state update:', action, data);
+            
+            // Example: Update UI, save progress, trigger game events
+            switch(action) {
+                case 'character_interviewed':
+                    // Mark character as interviewed in your game
+                    break;
+                case 'evidence_found':
+                    // Add evidence to player's inventory
+                    break;
+                case 'investigation_progress':
+                    // Update progress bar or unlock new areas
+                    break;
+            }
+        }
+        
+        // Widget control functions
+        function showWidget() {
+            if (widget) {
+                widget.show();
+            }
+        }
+        
+        function hideWidget() {
+            if (widget) {
+                widget.hide();
+            }
+        }
+        
+        function toggleInterrogationMode() {
+            if (widget) {
+                const currentMode = widget.config.isInterrogationMode;
+                widget.setInterrogationMode(!currentMode);
+                console.log('Interrogation mode:', !currentMode ? 'ON' : 'OFF');
+            }
+        }
+        
+        // Character selection
+        document.getElementById('character-select').addEventListener('change', function() {
+            const characterId = this.value;
+            if (characterId && widget) {
+                widget.selectCharacter(characterId);
+            }
+        });
+        
+        // Position change
+        document.getElementById('position-select').addEventListener('change', function() {
+            const position = this.value;
+            if (widget) {
+                widget.updateConfig({ position: position });
+            }
+        });
+        
+        // Example: Trigger widget based on game events
+        function triggerRoomInvestigation(roomId) {
+            const roomCharacters = {
+                'study': 'james-blackwood',
+                'office': 'marcus-reynolds',
+                'library': 'elena-rodriguez',
+                'art_studio': 'lily-chen',
+                'kitchen': 'thompson-butler'
+            };
+            
+            const characterId = roomCharacters[roomId];
+            if (characterId && widget) {
+                widget.show();
+                widget.selectCharacter(characterId);
+            }
+        }
+        
+        // Example: Game event triggers (you can call these from your game logic)
+        window.gameEvents = {
+            enterRoom: triggerRoomInvestigation,
+            startInvestigation: () => {
+                if (widget) {
+                    widget.show();
+                    widget.setInterrogationMode(true);
+                }
+            },
+            endInvestigation: () => {
+                if (widget) {
+                    widget.hide();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

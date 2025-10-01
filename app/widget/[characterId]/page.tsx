@@ -49,7 +49,8 @@ export default function CharacterWidget({ params }: { params: { characterId: str
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      // Try main API first
+      let response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +62,24 @@ export default function CharacterWidget({ params }: { params: { characterId: str
         })
       });
 
-      const data = await response.json();
+      let data = await response.json();
+      
+      // If main API fails, try fallback
+      if (!data.success) {
+        console.log('Main API failed, trying fallback...');
+        response = await fetch('/api/chat-fallback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            character: character.id,
+            message: inputMessage,
+            conversationHistory: messages.slice(-10)
+          })
+        });
+        data = await response.json();
+      }
       
       if (data.success) {
         const characterMessage = {
