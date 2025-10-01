@@ -95,15 +95,15 @@ export default function HomePage() {
             </div>
             
                 <div className="flex items-center space-x-2 sm:space-x-4">
-                  {/* Widget Integration Link */}
+                  {/* Widget Generator Link */}
                   <a
-                    href="/integration"
+                    href="/widgets"
                     target="_blank"
                     className="hidden lg:flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20"
-                    title="Widget Integration Hub"
+                    title="Character Widget Generator"
                   >
                     <Code className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Integration</span>
+                    <span className="hidden sm:inline">Widgets</span>
                   </a>
                   
                   {/* Investigation Panel Toggle - Hidden on mobile */}
@@ -169,14 +169,14 @@ export default function HomePage() {
                   </button>
                 </div>
                 
-                {/* Integration Link for Mobile */}
+                {/* Widget Generator Link for Mobile */}
                 <a
-                  href="/integration"
+                  href="/widgets"
                   target="_blank"
                   className="flex items-center space-x-2 px-3 py-2 text-amber-300/80 hover:text-amber-200 bg-black/60 hover:bg-black/70 rounded-lg transition-colors border border-amber-600/20 mb-4"
                 >
                   <Code className="w-4 h-4" />
-                  <span>Widget Integration Hub</span>
+                  <span>Character Widget Generator</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
