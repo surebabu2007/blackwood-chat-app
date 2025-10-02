@@ -1074,7 +1074,7 @@ mergeInto(LibraryManager.library, {
                 <span className="bg-amber-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>
                 <div>
                   <p className="font-medium">Paste into your project</p>
-                  <p className="text-sm text-amber-600">Add the code to your game's main files</p>
+                  <p className="text-sm text-amber-600">Add the code to your game&apos;s main files</p>
                 </div>
               </div>
               <div className="flex items-start">
@@ -1103,7 +1103,7 @@ mergeInto(LibraryManager.library, {
                 <li>• Character not responding: Verify API URL</li>
                 <li>• Styling conflicts: Use iframe isolation</li>
                 <li>• Mobile issues: Test responsive design</li>
-                <li>• Ren'Py errors: Check Python syntax</li>
+                <li>• Ren&apos;Py errors: Check Python syntax</li>
               </ul>
             </div>
             

@@ -52,9 +52,11 @@ An immersive interactive chatbot system for the Blackwood Manor murder mystery, 
 3. **Configure environment variables**
    Create a `.env.local` file:
    ```env
-   NEXT_PUBLIC_API_URL=https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse
-   NEXT_PUBLIC_BEARER_TOKEN=v0_25814740
+   NEXT_PUBLIC_API_URL=your_api_endpoint_here
+   NEXT_PUBLIC_BEARER_TOKEN=your_bearer_token_here
    ```
+   
+   **⚠️ Security Note**: Never commit your actual API credentials to version control. Keep your `.env.local` file in `.gitignore` and use placeholder values in documentation.
 
 4. **Run the development server**
    ```bash
@@ -193,6 +195,29 @@ const response = await ClaudeAPI.generateCharacterResponse(
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Security Best Practices
+
+### 🔒 Protecting Your API Credentials
+
+- **Never commit `.env.local`** to version control
+- **Use placeholder values** in documentation and example files
+- **Rotate API keys** regularly
+- **Use environment-specific** configurations for different deployments
+- **Monitor API usage** for unauthorized access
+
+### 🛡️ Environment Variables
+
+Always use environment variables for sensitive data:
+```bash
+# ✅ Good - Use environment variables
+NEXT_PUBLIC_API_URL=${API_URL}
+NEXT_PUBLIC_BEARER_TOKEN=${API_TOKEN}
+
+# ❌ Bad - Hardcoded credentials
+NEXT_PUBLIC_API_URL=https://api.example.com
+NEXT_PUBLIC_BEARER_TOKEN=actual_token_here
+```
 
 ## Support
 
