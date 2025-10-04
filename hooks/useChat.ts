@@ -290,7 +290,7 @@ export const useChat = () => {
       const returnMessage: Message = {
         id: `return-${Date.now()}`,
         characterId: currentCharacter.id,
-        content: AbuseDetectionSystem.getReturnMessage(currentCharacter.name),
+        content: SimpleAbuseDetection.getReturnMessage(currentCharacter.name),
         timestamp: new Date(),
         type: 'system'
       };
