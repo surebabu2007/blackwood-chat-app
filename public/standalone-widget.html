@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackwood Detective Widget - Standalone</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a0f0a 0%, #2c1810 100%);
+            color: #d4af37;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Widget Container */
+        .detective-widget-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 600px;
+            z-index: 10000;
+            font-family: 'Georgia', serif;
+        }
+
+        /* Widget Styles */
+        .detective-widget {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 100%);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Header */
+        .widget-header {
+            background: linear-gradient(90deg, #8B4513 0%, #A0522D 100%);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid #d4af37;
+            position: relative;
+        }
+
+        .character-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            justify-content: center;
+        }
+
+        .character-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #d4af37;
+            object-fit: cover;
+        }
+
+        .character-details h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .character-details p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #d4af37;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Chat Area */
+        .widget-chat {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #1a0f0a;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .character-message {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: white;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #2F4F4F 0%, #1F2F2F 100%);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .typing-indicator {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: white;
+            align-self: flex-start;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* Input Area */
+        .widget-input {
+            padding: 15px;
+            border-top: 2px solid #d4af37;
+            background: #2c1810;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            background: #1a0f0a;
+            color: #d4af37;
+            font-family: 'Georgia', serif;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #f4d03f;
+            box-shadow: 0 0 5px rgba(244, 208, 63, 0.3);
+        }
+
+        .send-button {
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            background: linear-gradient(135deg, #A0522D 0%, #8B4513 100%);
+            transform: translateY(-1px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Character Selector */
+        .character-selector {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .character-selector.show {
+            display: flex;
+        }
+
+        .character-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .character-card {
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 100%);
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .character-card:hover {
+            border-color: #f4d03f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .character-card.selected {
+            border-color: #f4d03f;
+            background: linear-gradient(135deg, #3d2817 0%, #2c1810 100%);
+        }
+
+        .character-card img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 2px solid #d4af37;
+        }
+
+        .character-card h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: #d4af37;
+        }
+
+        .character-card p {
+            margin: 0;
+            font-size: 12px;
+            color: #b8860b;
+        }
+
+        .selector-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .selector-header h3 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        .selector-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #d4af37;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Error States */
+        .error-message {
+            background: linear-gradient(135deg, #8B0000 0%, #A0522D 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .detective-widget-container {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+
+            .detective-widget {
+                border-radius: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .character-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden { display: none !important; }
+        .visible { display: block !important; }
+        .flex { display: flex !important; }
+        .text-center { text-align: center; }
+        .mb-10 { margin-bottom: 10px; }
+        .mt-10 { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="detective-widget-container">
+        <div class="detective-widget" id="detective-widget">
+            <!-- Character Selector -->
+            <div class="character-selector" id="character-selector">
+                <button class="selector-close" onclick="hideCharacterSelector()">&times;</button>
+                <div class="selector-header">
+                    <h3>Select a Character to Interview</h3>
+                    <p>Choose who you'd like to question about the case</p>
+                </div>
+                <div class="character-list" id="character-list">
+                    <!-- Characters will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Main Widget -->
+            <div class="widget-header">
+                <div class="character-info" id="character-info">
+                    <img src="/Profile images /james blackwood.png" alt="Detective" class="character-avatar" id="character-avatar">
+                    <div class="character-details">
+                        <h3 id="character-name">Detective Chat</h3>
+                        <p id="character-role">Investigation Assistant</p>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <button class="close-button" onclick="closeWidget()">&times;</button>
+            </div>
+            
+            <div class="widget-chat" id="chat-messages">
+                <div class="message character-message">
+                    <strong>System:</strong><br>
+                    Welcome, Detective. Select a character to begin your investigation.
+                </div>
+            </div>
+            
+            <div class="widget-input">
+                <div class="input-group">
+                    <textarea 
+                        class="message-input" 
+                        id="message-input" 
+                        placeholder="Ask about the case..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" onclick="sendMessage()" id="send-button">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            apiUrl: 'https://blackwood-chat-app.vercel.app',
+            characters: [
+                {
+                    id: 'james-blackwood',
+                    name: 'James Blackwood',
+                    role: 'Mansion Owner',
+                    avatar: '/Profile images /james blackwood.png',
+                    description: 'The wealthy owner of Blackwood Manor'
+                },
+                {
+                    id: 'marcus-reynolds',
+                    name: 'Marcus Reynolds',
+                    role: 'Business Partner',
+                    avatar: '/Profile images /marcus.png',
+                    description: 'James\'s business associate'
+                },
+                {
+                    id: 'elena-rodriguez',
+                    name: 'Dr. Elena Rodriguez',
+                    role: 'Family Doctor',
+                    avatar: '/Profile images /elina.png',
+                    description: 'The family physician'
+                },
+                {
+                    id: 'lily-chen',
+                    name: 'Lily Chen',
+                    role: 'Art Student',
+                    avatar: '/Profile images /lilychen.png',
+                    description: 'Art student staying at the manor'
+                },
+                {
+                    id: 'thompson-butler',
+                    name: 'Mr. Thompson',
+                    role: 'Butler',
+                    avatar: '/Profile images /butler.png',
+                    description: 'The loyal family butler'
+                }
+            ],
+            currentCharacter: null,
+            conversationHistory: [],
+            isTyping: false,
+            retryCount: 0,
+            maxRetries: 3
+        };
+
+        // Initialize widget
+        function initWidget() {
+            populateCharacterList();
+            setupEventListeners();
+            loadConversationHistory();
+        }
+
+        // Populate character selection
+        function populateCharacterList() {
+            const characterList = document.getElementById('character-list');
+            characterList.innerHTML = '';
+
+            CONFIG.characters.forEach(character => {
+                const characterCard = document.createElement('div');
+                characterCard.className = 'character-card';
+                characterCard.onclick = () => selectCharacter(character.id);
+                
+                characterCard.innerHTML = `
+                    <img src="${character.avatar}" alt="${character.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM4QjQ1MTMiLz4KPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5TdXNwZWN0PC90ZXh0Pgo8L3N2Zz4='">
+                    <h4>${character.name}</h4>
+                    <p>${character.role}</p>
+                `;
+                
+                characterList.appendChild(characterCard);
+            });
+        }
+
+        // Show character selector
+        function showCharacterSelector() {
+            document.getElementById('character-selector').classList.add('show');
+        }
+
+        // Hide character selector
+        function hideCharacterSelector() {
+            document.getElementById('character-selector').classList.remove('show');
+        }
+
+        // Select character
+        function selectCharacter(characterId) {
+            const character = CONFIG.characters.find(c => c.id === characterId);
+            if (!character) return;
+
+            CONFIG.currentCharacter = character;
+            
+            // Update UI
+            document.getElementById('character-name').textContent = character.name;
+            document.getElementById('character-role').textContent = character.role;
+            document.getElementById('character-avatar').src = character.avatar;
+            
+            // Update character cards
+            document.querySelectorAll('.character-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.character-card').classList.add('selected');
+            
+            hideCharacterSelector();
+            
+            // Add welcome message
+            addMessage(`Hello Detective. I'm ${character.name}. What would you like to know about the case?`, 'character');
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!CONFIG.currentCharacter) {
+                showCharacterSelector();
+                return;
+            }
+            
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send to API
+            sendToAPI(message);
+        }
+
+        // Send to API
+        async function sendToAPI(message) {
+            try {
+                const response = await fetch(`${CONFIG.apiUrl}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        character: CONFIG.currentCharacter.id,
+                        message: message,
+                        conversationHistory: CONFIG.conversationHistory
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    addMessage(data.response, 'character');
+                } else {
+                    addMessage('I apologize, but I cannot respond right now. Please try again.', 'character');
+                }
+                
+                CONFIG.retryCount = 0; // Reset retry count on success
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                hideTypingIndicator();
+                
+                if (CONFIG.retryCount < CONFIG.maxRetries) {
+                    CONFIG.retryCount++;
+                    setTimeout(() => sendToAPI(message), 1000 * CONFIG.retryCount);
+                    addMessage('Connection issue, retrying...', 'character');
+                } else {
+                    addMessage('I apologize, but I cannot respond right now. Please check your connection and try again.', 'character');
+                    CONFIG.retryCount = 0;
+                }
+            }
+        }
+
+        // Add message to chat
+        function addMessage(text, type) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
+            if (type === 'user') {
+                messageDiv.innerHTML = `<strong>You:</strong><br>${text}`;
+            } else {
+                messageDiv.innerHTML = `<strong>${CONFIG.currentCharacter?.name || 'System'}:</strong><br>${text}`;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Add to conversation history
+            CONFIG.conversationHistory.push({
+                content: text,
+                type: type,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Save to localStorage
+            saveConversationHistory();
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <strong>${CONFIG.currentCharacter?.name || 'Character'}:</strong><br>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            CONFIG.isTyping = true;
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            CONFIG.isTyping = false;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Enter key to send message
+            document.getElementById('message-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Auto-resize textarea
+            document.getElementById('message-input').addEventListener('input', function(e) {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+            });
+
+            // Click on character info to show selector
+            document.getElementById('character-info').addEventListener('click', showCharacterSelector);
+        }
+
+        // Save conversation history
+        function saveConversationHistory() {
+            try {
+                localStorage.setItem('detective-widget-history', JSON.stringify(CONFIG.conversationHistory));
+            } catch (error) {
+                console.warn('Could not save conversation history:', error);
+            }
+        }
+
+        // Load conversation history
+        function loadConversationHistory() {
+            try {
+                const saved = localStorage.getItem('detective-widget-history');
+                if (saved) {
+                    CONFIG.conversationHistory = JSON.parse(saved);
+                }
+            } catch (error) {
+                console.warn('Could not load conversation history:', error);
+            }
+        }
+
+        // Close widget
+        function closeWidget() {
+            if (confirm('Are you sure you want to close the detective widget?')) {
+                document.getElementById('detective-widget').style.display = 'none';
+            }
+        }
+
+        // Public API for external integration
+        window.DetectiveWidget = {
+            show: () => {
+                document.getElementById('detective-widget').style.display = 'flex';
+            },
+            hide: () => {
+                document.getElementById('detective-widget').style.display = 'none';
+            },
+            selectCharacter: (characterId) => {
+                selectCharacter(characterId);
+            },
+            sendMessage: (message) => {
+                if (CONFIG.currentCharacter) {
+                    addMessage(message, 'user');
+                    sendToAPI(message);
+                }
+            },
+            getCurrentCharacter: () => CONFIG.currentCharacter,
+            getConversationHistory: () => CONFIG.conversationHistory,
+            clearHistory: () => {
+                CONFIG.conversationHistory = [];
+                document.getElementById('chat-messages').innerHTML = '';
+                saveConversationHistory();
+            }
+        };
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initWidget);
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        // Handle visibility change (pause/resume when tab is hidden/visible)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Pause any ongoing operations
+                CONFIG.isTyping = false;
+            } else {
+                // Resume operations
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+
+        // Error handling for unhandled errors
+        window.addEventListener('error', function(e) {
+            console.error('Widget Error:', e.error);
+            addMessage('An error occurred. Please refresh the page and try again.', 'character');
+        });
+
+        // Handle network status
+        window.addEventListener('online', function() {
+            addMessage('Connection restored. You can continue your investigation.', 'character');
+        });
+
+        window.addEventListener('offline', function() {
+            addMessage('Connection lost. Some features may not work until connection is restored.', 'character');
+        });
+    </script>
+</body>
+</html>

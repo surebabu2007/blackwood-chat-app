@@ -1,13 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Character, Message } from '@/lib/types';
 import { useChatStore } from '@/lib/store';
 import { ClaudeAPI } from '@/lib/api';
+import { TimelineManager } from '@/lib/timeline';
+import { CharacterStatusManager } from '@/lib/characterStatus';
+import { SimpleAbuseDetection } from '@/lib/simpleAbuseDetection';
+import { typewriterSounds } from '@/lib/typewriterSounds';
 
 export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastCheckedOnline, setLastCheckedOnline] = useState<Date>(new Date());
   
   const {
     currentCharacter,
@@ -34,6 +39,63 @@ export const useChat = () => {
     if (!content.trim() || content.length > 500) {
       setError('Message must be between 1 and 500 characters');
       return;
+    }
+
+    // Check if character is online
+    if (!CharacterStatusManager.isCharacterOnline(currentCharacter.id)) {
+      setError('Character is currently offline and cannot respond');
+      return;
+    }
+
+    // Check for abuse or irrelevant content using simple hardcoded detection
+    if (SimpleAbuseDetection.shouldAnalyze(content)) {
+      try {
+        const abuseDetection = SimpleAbuseDetection.detectAbuse(content, currentCharacter.name);
+        
+        // Act on detections with high confidence
+        if ((abuseDetection.isAbusive || abuseDetection.isIrrelevant) && abuseDetection.confidence >= 80) {
+          // Put character offline
+          const duration = abuseDetection.severity === 'high' ? 60 : 
+                          abuseDetection.severity === 'medium' ? 45 : 40;
+          
+          CharacterStatusManager.setCharacterOffline(
+            currentCharacter.id,
+            abuseDetection.reason,
+            abuseDetection.suggestedResponse || 'Character is offended and needs a moment.',
+            duration
+          );
+
+          // Add offline message to conversation
+          const offlineMessage: Message = {
+            id: `offline-${Date.now()}`,
+            characterId: currentCharacter.id,
+            content: abuseDetection.suggestedResponse || 'I must say, Detective Chen, such language is quite unacceptable. I shall not continue this conversation.',
+            timestamp: new Date(),
+            type: 'system'
+          };
+
+          addMessage(currentCharacter.id, offlineMessage);
+
+          // Add system message about character going offline
+          const systemMessage: Message = {
+            id: `system-offline-${Date.now()}`,
+            characterId: currentCharacter.id,
+            content: `Character appears to be quite offended and has stepped away from the conversation.`,
+            timestamp: new Date(),
+            type: 'system'
+          };
+
+          addMessage(currentCharacter.id, systemMessage);
+          
+          setError('Character is now offline due to inappropriate behavior');
+          // Play error sound for offline character
+          await typewriterSounds.playErrorSound();
+          return;
+        }
+      } catch (error) {
+        console.warn('LLM abuse detection failed, proceeding with normal message:', error);
+        // Continue with normal processing if LLM detection fails
+      }
     }
 
     // Add user message
@@ -72,15 +134,28 @@ export const useChat = () => {
           response.data.message || 
           "I'm not sure how to respond to that.";
 
+        // Validate response against timeline constraints
+        const validation = TimelineManager.validateCharacterResponse(
+          currentCharacter.id, 
+          responseContent, 
+          currentCharacter.trustLevel
+        );
+
+        let finalResponse = responseContent;
+        if (!validation.isValid) {
+          console.warn('Response validation failed:', validation.violations);
+          // Filter out forbidden content or adjust response
+          finalResponse = filterResponseContent(responseContent, validation.violations);
+        }
 
         // Create character message
         const characterMessage: Message = {
           id: `character-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           characterId: currentCharacter.id,
-          content: responseContent.trim(),
+          content: finalResponse.trim(),
           timestamp: new Date(),
           type: 'character',
-          emotionalTone: determineEmotionalTone(responseContent, currentCharacter)
+          emotionalTone: determineEmotionalTone(finalResponse, currentCharacter)
         };
 
         addMessage(currentCharacter.id, characterMessage);
@@ -95,8 +170,11 @@ export const useChat = () => {
         // Check for evidence or clues in the response
         checkForEvidence(responseContent);
         
-        // Update investigation progress
+        // Update investigation progress and timeline
         updateInvestigationProgress();
+        
+        // Update timeline manager with current progress
+        TimelineManager.updateProgress(gameState.investigationProgress);
         
       } else {
         throw new Error(response.error || 'Failed to generate response');
@@ -169,8 +247,27 @@ export const useChat = () => {
     });
   };
 
+  const filterResponseContent = (content: string, violations: string[]): string => {
+    // Simple content filtering - remove or replace forbidden content
+    let filteredContent = content;
+    
+    // Remove specific forbidden topics mentioned in violations
+    violations.forEach(violation => {
+      if (violation.includes('forbidden topic')) {
+        const topic = violation.split(': ')[1];
+        // Replace with a generic response
+        filteredContent = filteredContent.replace(new RegExp(topic, 'gi'), '[redacted]');
+      }
+    });
+    
+    return filteredContent;
+  };
+
   const selectCharacter = useCallback((character: Character) => {
     setCurrentCharacter(character);
+    
+    // Initialize character status
+    CharacterStatusManager.initializeCharacter(character.id);
     
     // Add character to suspects if not already added
     if (!investigationState.suspectsInterviewed.includes(character.name)) {
@@ -181,6 +278,31 @@ export const useChat = () => {
     addInvestigationNote(`Started conversation with ${character.name}`);
   }, [setCurrentCharacter, addSuspect, addInvestigationNote, investigationState.suspectsInterviewed]);
 
+  // Check for characters coming back online
+  const checkForCharactersComingOnline = useCallback(() => {
+    if (!currentCharacter) return;
+
+    const wasOffline = !CharacterStatusManager.isCharacterOnline(currentCharacter.id);
+    const nowOnline = CharacterStatusManager.isCharacterOnline(currentCharacter.id);
+
+    // If character just came back online, add a return message
+    if (wasOffline && nowOnline && lastCheckedOnline < new Date(Date.now() - 5000)) {
+      const returnMessage: Message = {
+        id: `return-${Date.now()}`,
+        characterId: currentCharacter.id,
+        content: AbuseDetectionSystem.getReturnMessage(currentCharacter.name),
+        timestamp: new Date(),
+        type: 'system'
+      };
+
+      addMessage(currentCharacter.id, returnMessage);
+      // Play bell sound when character comes back online
+      typewriterSounds.playBellSound();
+    }
+
+    setLastCheckedOnline(new Date());
+  }, [currentCharacter, addMessage, lastCheckedOnline]);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -189,6 +311,12 @@ export const useChat = () => {
     if (!currentCharacter) return [];
     return conversations[currentCharacter.id]?.messages || [];
   }, [currentCharacter, conversations]);
+
+  // Set up interval to check for characters coming back online
+  React.useEffect(() => {
+    const interval = setInterval(checkForCharactersComingOnline, 2000);
+    return () => clearInterval(interval);
+  }, [checkForCharactersComingOnline]);
 
   return {
     currentCharacter,
@@ -199,6 +327,7 @@ export const useChat = () => {
     sendMessage,
     selectCharacter,
     clearError,
-    getCurrentMessages
+    getCurrentMessages,
+    checkForCharactersComingOnline
   };
 };

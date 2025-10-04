@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { PerformanceMonitor } from '@/components/PerformanceMonitor'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,7 +26,6 @@ export default function RootLayout({
       <body className={`${inter.className} bg-blackwood-900 text-white min-h-screen touch-manipulation mobile-tap-highlight`}>
         <div className="min-h-screen bg-gradient-to-br from-blackwood-900 via-blackwood-800 to-blackwood-900 safe-area-inset">
           {children}
-          <PerformanceMonitor />
         </div>
       </body>
     </html>

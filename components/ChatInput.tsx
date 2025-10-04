@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import { typewriterSounds } from '@/lib/typewriterSounds';
 import { motion } from 'framer-motion';
 
 interface ChatInputProps {
@@ -10,6 +11,8 @@ interface ChatInputProps {
   disabled?: boolean;
   placeholder?: string;
   characterName?: string;
+  characterOffline?: boolean;
+  timeUntilOnline?: number;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -17,22 +20,30 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isTyping,
   disabled = false,
   placeholder = "Ask a question...",
-  characterName
+  characterName,
+  characterOffline = false,
+  timeUntilOnline = 0
 }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !disabled && !isTyping && message.length <= 500) {
+    if (message.trim() && !disabled && !isTyping && !characterOffline && message.length <= 500) {
       onSendMessage(message.trim());
       setMessage('');
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+    // Play typing sound for regular keys
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      await typewriterSounds.playTypingSound();
+    }
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      await typewriterSounds.playCarriageReturnSound();
       handleSubmit(e);
     }
   };
@@ -64,7 +75,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={disabled || isTyping}
+            disabled={disabled || isTyping || characterOffline}
             aria-label="Type your message"
             aria-describedby="message-help"
             className={`
@@ -72,8 +83,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               text-amber-100 placeholder-amber-400/60 resize-none focus:outline-none focus:ring-2
               focus:ring-amber-500/50 focus:border-amber-500/40 transition-all duration-200
               max-h-32 min-h-[2.5rem] sm:min-h-[3rem] text-sm sm:text-base backdrop-blur-sm
+              font-typewriter tracking-wide
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               ${isTyping ? 'opacity-75' : ''}
+              ${characterOffline ? 'opacity-50 cursor-not-allowed border-red-600/30' : ''}
             `}
             rows={1}
             style={{ minHeight: '3rem' }}
@@ -89,13 +102,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         
         <motion.button
           type="submit"
-          disabled={!message.trim() || disabled || isTyping}
+          disabled={!message.trim() || disabled || isTyping || characterOffline}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={`
             flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl transition-all duration-200
-            ${message.trim() && !disabled && !isTyping
+            ${message.trim() && !disabled && !isTyping && !characterOffline
               ? 'bg-amber-600/80 hover:bg-amber-700/90 text-amber-100 border border-amber-500/40'
+              : characterOffline
+              ? 'bg-red-900/50 text-red-400/50 cursor-not-allowed border border-red-700/20'
               : 'bg-black/70 text-amber-600/50 cursor-not-allowed border border-amber-700/20'
             }
           `}
@@ -108,8 +123,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </motion.button>
       </form>
       
+      {/* Offline indicator */}
+      {characterOffline && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center space-x-2 mt-2 text-xs sm:text-sm text-red-400/80 bg-red-900/20 border border-red-600/30 rounded-lg px-3 py-2"
+        >
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="truncate">
+            {characterName || 'Character'} is offline
+            {timeUntilOnline > 0 && ` (${timeUntilOnline}s)`}
+          </span>
+        </motion.div>
+      )}
+
       {/* Typing indicator */}
-      {isTyping && (
+      {isTyping && !characterOffline && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

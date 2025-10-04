@@ -82,8 +82,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           {/* Character name */}
           {(isUser || (!isUser && !isSystem && characterName)) && (
-            <span className="text-xs text-amber-300 mb-1 px-2 truncate max-w-[200px] sm:max-w-none">
-              {isUser ? 'Detective Sarah Chen' : characterName}
+            <span className="text-xs text-amber-300 mb-1 px-2 truncate max-w-[200px] sm:max-w-none font-typewriter font-bold tracking-wide">
+              {isUser ? 'DETECTIVE SARAH CHEN' : characterName?.toUpperCase()}
             </span>
           )}
           
@@ -103,7 +103,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 </div>
               )}
               <div className="flex-1">
-                <p className="text-sm sm:text-sm leading-relaxed whitespace-pre-wrap break-words">
+                <p className="text-sm sm:text-sm leading-relaxed whitespace-pre-wrap break-words font-typewriter tracking-wide">
                   {message.content}
                 </p>
               </div>
@@ -111,14 +111,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             
             {/* Emotional tone indicator */}
             {message.emotionalTone && !isUser && (
-              <div className="mt-1 text-xs opacity-75">
+              <div className="mt-1 text-xs opacity-75 font-typewriter tracking-wide">
                 <span className="italic">({message.emotionalTone})</span>
               </div>
             )}
           </div>
           
           {/* Timestamp */}
-          <span className="text-xs text-amber-400/70 mt-1 px-2">
+          <span className="text-xs text-amber-400/70 mt-1 px-2 font-typewriter tracking-wide">
             {formatTime(message.timestamp)}
           </span>
         </div>

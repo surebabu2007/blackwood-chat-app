@@ -1,5 +1,6 @@
 import { ClaudeAPIRequest, APIResponse, Character, Message } from './types';
 import { victoriaBlackwood } from './victimData';
+import { TimelineManager } from './timeline';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse';
 const BEARER_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || 'v0_25814740';
@@ -98,13 +99,48 @@ export class ClaudeAPI {
         }
   }
 
+  /**
+   * Generate abuse detection response using Claude API
+   */
+  static async generateAbuseDetectionResponse(message: string): Promise<string> {
+    try {
+      const response = await fetch('/api/abuse-detection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Convert the response object to JSON string
+        return JSON.stringify(data.data);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Abuse detection API error:', error);
+      throw error;
+    }
+  }
+
   static async generateCharacterResponse(
     character: Character,
     userMessage: string,
     conversationHistory: Message[],
     context: any
   ): Promise<APIResponse> {
-    const systemPrompt = this.buildSystemPrompt(character, context);
+    // Get timeline context and constraints
+    const timelineContext = TimelineManager.getResponseContext(character.id, character.trustLevel);
+    const systemPrompt = this.buildSystemPrompt(character, context, timelineContext);
     const messages = this.buildMessageHistory(conversationHistory, userMessage);
 
     const request: ClaudeAPIRequest = {
@@ -113,18 +149,41 @@ export class ClaudeAPI {
       model: 'claude-4-sonnet'
     };
 
-    return this.makeRequest(request);
+    const response = await this.makeRequest(request);
+    
+    // Ensure response is short (2-3 lines max) by truncating if needed
+    if (response.data && typeof response.data === 'string' && response.data.length > 150) {
+      // Truncate to approximately 2-3 lines
+      const lines = response.data.split('\n');
+      if (lines.length > 3) {
+        response.data = lines.slice(0, 3).join('\n');
+        // Add ellipsis if truncated
+        if (!response.data.endsWith('.')) {
+          response.data += '...';
+        }
+      }
+    }
+    
+    return response;
   }
 
-  private static buildSystemPrompt(character: Character, context: any): string {
+  private static buildSystemPrompt(character: Character, context: any, timelineContext?: string): string {
     const basePrompt = `You are ${character.name}, ${character.role} in the Blackwood Manor murder mystery.
+
+SETTING: 1947 - Post-World War II America
+- Year: 1947, just 2 years after WWII ended
+- Location: Gothic mansion in New England
+- Society: Formal etiquette, traditional gender roles, class hierarchy
+- Technology: Rotary phones, telegrams, radio, classic cars, gas/electric lights
+- Forensics: Fingerprints, ballistics, blood type, autopsy (NO DNA, computers, CCTV)
 
 DETECTIVE CONTEXT:
 - You are being interviewed by Detective Sarah Chen
 - Always address her as "Detective Chen" or "Detective Sarah Chen"
-- Never use "sir" - she is a female detective
+- Never use "sir" - she is a female detective (unusual in 1947)
 - She is investigating Victoria Blackwood's murder
 - Be respectful but maintain your character's personality
+- Show appropriate respect for her position despite gender norms of 1947
 
 PERSONALITY: ${character.personality.join(', ')}
 CURRENT EMOTIONAL STATE: ${character.currentEmotionalState}
@@ -175,11 +234,19 @@ INVESTIGATION CONTEXT:
 - Relationship score: ${context.relationshipScore || 0}
 - Revealed information: ${context.revealedInformation?.join(', ') || 'none'}
 
+1947 LANGUAGE AND MANNERISMS:
+- Use formal, period-appropriate language
+- Period slang: "swell", "keen", "gee whiz", "oh my", "goodness gracious"
+- Formal address: "Detective Chen", "Madam", "Sir" (for men)
+- Expressions: "I should say", "quite so", "indeed", "I beg your pardon"
+- Technology references: "telegram", "rotary phone", "wireless", "motor car"
+- Social references: "post-war", "the war", "veterans", "rationing"
+
 INSTRUCTIONS:
-1. Respond as ${character.name} would, staying true to their personality and emotional state
-2. Keep responses SHORT (1-3 sentences) but engaging and interactive
+1. Respond as ${character.name} would in 1947, staying true to their personality and emotional state
+2. CRITICAL: Keep responses to MAXIMUM 2-3 lines (50-75 words). Be concise and direct.
 3. Remember previous conversations and build on them naturally
-4. Show emotional reactions appropriate to your character
+4. Show emotional reactions appropriate to your character and the 1947 setting
 5. Reveal information gradually based on trust level and conversation depth
 6. Use your knowledge base to provide relevant information about Victoria and the case
 7. React to emotional triggers appropriately
@@ -188,8 +255,18 @@ INSTRUCTIONS:
 10. Show genuine emotions - grief, fear, anger, desperation, etc.
 11. Reference Victoria's death and your relationship with her when appropriate
 12. ALWAYS address Detective Sarah Chen as "Detective Chen" or "Detective Sarah Chen" - never "sir"
+13. Use 1947-appropriate language, expressions, and references
+14. Reference post-war context when relevant
+15. Maintain your character's social class and background
 
-Remember: You are being interviewed by Detective Sarah Chen investigating Victoria's murder. Respond naturally and authentically as your character would.`;
+RESPONSE LENGTH ENFORCEMENT:
+- MAXIMUM 2-3 lines per response
+- NO lengthy explanations or monologues
+- Be direct and to the point
+- If you need to say more, wait for follow-up questions
+- Focus on the most important information first
+
+Remember: You are being interviewed by Detective Sarah Chen investigating Victoria's murder in 1947. Respond naturally and authentically as your character would in this time period.${timelineContext || ''}`;
 
     return basePrompt;
   }

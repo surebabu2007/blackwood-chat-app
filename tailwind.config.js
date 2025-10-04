@@ -99,6 +99,16 @@ module.exports = {
         'typewriter': ['JMH Typewriter', 'Courier New', 'monospace'],
         'detective': ['JMH Typewriter', 'Crimson Text', 'serif'],
       },
+      fontWeight: {
+        'thin': '100',
+        'light': '300',
+        'normal': '400',
+        'medium': '500',
+        'semibold': '600',
+        'bold': '700',
+        'extrabold': '800',
+        'black': '900',
+      },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',

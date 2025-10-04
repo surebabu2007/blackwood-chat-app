@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Character, Message, Conversation, InvestigationState, GameState } from './types';
+import { TimelineManager } from './timeline';
 
 interface ChatStore {
   // Current state
@@ -144,9 +145,21 @@ export const useChatStore = create<ChatStore>()(
       },
       
       updateGameState: (updates) => {
-        set((state) => ({
-          gameState: { ...state.gameState, ...updates }
-        }));
+        set((state) => {
+          const newGameState = { ...state.gameState, ...updates };
+          
+          // Update timeline manager when investigation progress changes
+          if (updates.investigationProgress !== undefined) {
+            TimelineManager.updateProgress(updates.investigationProgress);
+          }
+          
+          // Update timeline manager when location changes
+          if (updates.currentLocation) {
+            TimelineManager.updateLocation(updates.currentLocation, updates.timeOfDay);
+          }
+          
+          return { gameState: newGameState };
+        });
       },
       
       resetGame: () => {

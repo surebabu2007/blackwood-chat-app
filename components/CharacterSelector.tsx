@@ -4,6 +4,8 @@ import React from 'react';
 import { Character } from '@/lib/types';
 import { CharacterCard } from './CharacterCard';
 import { motion } from 'framer-motion';
+import { CharacterAvailabilityManager } from '@/lib/characterAvailability';
+import { useChatStore } from '@/lib/store';
 
 interface CharacterSelectorProps {
   characters: Character[];
@@ -18,8 +20,10 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   onCharacterSelect,
   investigationProgress
 }) => {
+  const { gameState } = useChatStore();
+  
   const getCharacterAvailability = (character: Character) => {
-    // All characters are always available for investigation
+    // All characters are available from the start for natural 1947 interactions
     return true;
   };
 
@@ -33,6 +37,14 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     return 'available';
   };
 
+  const getCharacterAvailabilityInfo = (character: Character) => {
+    return CharacterAvailabilityManager.getCharacterAvailability(
+      character.id, 
+      investigationProgress, 
+      gameState.currentLocation
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -40,13 +52,10 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       className="bg-black/85 backdrop-blur-md border-b border-amber-600/20 p-4"
     >
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-amber-100">
-            Interview Suspects
+        <div className="mb-6 px-2">
+          <h2 className="text-lg font-typewriter font-bold text-amber-100 tracking-wide">
+            INTERROGATION SUBJECTS
           </h2>
-          <div className="text-xs text-amber-300/80 bg-black/60 px-2 py-1 rounded-full border border-amber-600/20">
-            All Available
-          </div>
         </div>
         
         <div className="space-y-3 px-2">
@@ -65,7 +74,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                   character={character}
                   isSelected={status === 'selected'}
                   onClick={() => onCharacterSelect(character)}
-                  isAvailable={true}
+                  isAvailable={isAvailable}
+                  availabilityInfo={getCharacterAvailabilityInfo(character)}
                 />
                 
               </motion.div>
@@ -75,8 +85,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
         
         {/* Investigation progress bar */}
         <div className="mt-4">
-          <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
-            <span>Investigation Progress</span>
+          <div className="flex items-center justify-between text-sm text-gray-400 mb-2 font-typewriter tracking-wide">
+            <span>INVESTIGATION PROGRESS</span>
             <span>{investigationProgress}%</span>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2">
