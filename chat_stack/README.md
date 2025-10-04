@@ -194,7 +194,7 @@ const response = await ClaudeAPI.generateCharacterResponse(
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This is a Hackathon 2025 project by Suresh Pydikondala.
 
 ## Security Best Practices
 
