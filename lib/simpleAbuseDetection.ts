@@ -218,4 +218,23 @@ export class SimpleAbuseDetection {
         return 'I must say, Detective Chen, such language is quite unacceptable.';
     }
   }
+
+  /**
+   * Get return message when character comes back online
+   */
+  static getReturnMessage(characterName: string): string {
+    const returnMessages = [
+      `Ah, Detective Chen, I'm back. I do apologize for my brief absence.`,
+      `Good heavens, I'm terribly sorry for stepping away. I'm here now, Detective Chen.`,
+      `My apologies, Detective Chen. I had to attend to some matters. I'm ready to continue our conversation.`,
+      `I do beg your pardon, Detective Chen. I'm back and ready to assist with your investigation.`,
+      `Terribly sorry for the interruption, Detective Chen. I'm here now.`,
+      `I must apologize for my absence, Detective Chen. I'm ready to continue.`,
+      `Good gracious, I'm back, Detective Chen. I do apologize for stepping away.`,
+      `I'm terribly sorry for the delay, Detective Chen. I'm here now.`
+    ];
+    
+    // Return a random message for variety
+    return returnMessages[Math.floor(Math.random() * returnMessages.length)];
+  }
 }

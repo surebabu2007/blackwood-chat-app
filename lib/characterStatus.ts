@@ -3,6 +3,8 @@
  * Manages offline/online status for characters based on user behavior
  */
 
+import { AbuseDetectionSystem } from './abuseDetection';
+
 export interface CharacterStatus {
   characterId: string;
   isOnline: boolean;
@@ -156,7 +158,6 @@ export class CharacterStatusManager {
     message?: string;
     duration?: number;
   } {
-    const { AbuseDetectionSystem } = require('./abuseDetection');
     
     const detection = AbuseDetectionSystem.detectAbuse(message);
     
@@ -244,7 +245,7 @@ export class CharacterStatusManager {
     const status = this.characterStatuses.get(characterId);
     if (!status) return false;
 
-    return !status.isOnline && status.offlineUntil && new Date() < status.offlineUntil;
+    return !status.isOnline && status.offlineUntil !== undefined && new Date() < status.offlineUntil;
   }
 
   /**

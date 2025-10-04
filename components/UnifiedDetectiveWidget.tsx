@@ -81,13 +81,6 @@ export const UnifiedDetectiveWidget: React.FC<UnifiedDetectiveWidgetProps> = ({
   // ElevenLabs API Integration
   const [elevenLabsConfig, setElevenLabsConfig] = useState<any>(null);
 
-  useEffect(() => {
-    // Load ElevenLabs widget configuration if API key and agent ID are provided
-    if (apiKey && agentId) {
-      loadElevenLabsConfig();
-    }
-  }, [apiKey, agentId]);
-
   const loadElevenLabsConfig = async () => {
     try {
       const response = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${agentId}/widget`, {
@@ -105,6 +98,13 @@ export const UnifiedDetectiveWidget: React.FC<UnifiedDetectiveWidgetProps> = ({
       console.error('Failed to load ElevenLabs configuration:', error);
     }
   };
+
+  useEffect(() => {
+    // Load ElevenLabs widget configuration if API key and agent ID are provided
+    if (apiKey && agentId) {
+      loadElevenLabsConfig();
+    }
+  }, [apiKey, agentId, loadElevenLabsConfig]);
 
   const toggleWidget = (characterId: string) => {
     const newActiveWidgets = new Set(activeWidgets);
