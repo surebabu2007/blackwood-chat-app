@@ -121,7 +121,11 @@ export default function IntegrationPage() {
       const content = await response.text();
       await navigator.clipboard.writeText(content);
       
-      setCopiedFiles(prev => new Set([...prev, fileId]));
+      setCopiedFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.add(fileId);
+        return newSet;
+      });
       setTimeout(() => {
         setCopiedFiles(prev => {
           const newSet = new Set(prev);
