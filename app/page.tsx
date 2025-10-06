@@ -95,8 +95,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Simple solid transparent overlay for game integration */}
-      <div className="absolute inset-0 bg-black/20"></div>
+      {/* Lighter transparent overlay for game integration (~60% transparent) */}
+      <div className="absolute inset-0 bg-black/10"></div>
       
       
       {/* Network Status */}
@@ -168,7 +168,7 @@ export default function HomePage() {
 
       <div className="flex h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] relative z-20">
         {/* Character Selector - Desktop */}
-        <div className="block w-80 sm:w-96 xl:w-[28rem] bg-black/30 border-r border-amber-600/20 overflow-y-auto">
+        <div className="block w-80 sm:w-96 xl:w-[28rem] bg-black/20 border-r border-amber-600/20 overflow-y-auto">
           <CharacterSelector
             characters={characters}
             selectedCharacter={currentCharacter}
@@ -179,12 +179,12 @@ export default function HomePage() {
 
         {/* Mobile Character Selector */}
         {showMobileMenu && (
-          <div className="lg:hidden fixed inset-0 z-40 bg-black/40">
+          <div className="lg:hidden fixed inset-0 z-40 bg-black/20">
             <motion.div
               initial={{ opacity: 0, x: -300 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -300 }}
-              className="w-96 sm:w-[28rem] h-full bg-black/40 border-r border-amber-600/20 overflow-y-auto"
+              className="w-96 sm:w-[28rem] h-full bg-black/20 border-r border-amber-600/20 overflow-y-auto"
             >
               {/* Mobile Menu Header */}
               <div className="p-4 border-b border-amber-600/20">
@@ -232,7 +232,7 @@ export default function HomePage() {
         )}
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col bg-black/20 relative">
+        <div className="flex-1 flex flex-col bg-black/10 relative">
           <ErrorBoundary>
             {/* Chat Container */}
             <ChatContainer
