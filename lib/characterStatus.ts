@@ -187,18 +187,18 @@ export class CharacterStatusManager {
    */
   static getStatusMessage(characterId: string): string {
     const status = this.characterStatuses.get(characterId);
-    if (!status) return 'Online';
+    if (!status) return 'Cooperating';
 
     if (status.isOnline) {
-      return 'Online';
+      return 'Cooperating';
     }
 
     const timeRemaining = this.getTimeUntilOnline(characterId);
     if (timeRemaining > 0) {
-      return `Offline (${timeRemaining}s)`;
+      return `Not cooperating (${timeRemaining}s)`;
     }
 
-    return 'Online';
+    return 'Cooperating';
   }
 
   /**

@@ -132,7 +132,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         >
           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
           <span className="truncate">
-            {characterName || 'Character'} is offline
+            {characterName || 'Character'} is not cooperating with the interrogation
             {timeUntilOnline > 0 && ` (${timeUntilOnline}s)`}
           </span>
         </motion.div>

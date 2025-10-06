@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Character } from '@/lib/types';
 import { motion } from 'framer-motion';
-import { CheckCircle, Circle, Lock, Clock, Wifi, WifiOff } from 'lucide-react';
+import { CheckCircle, Circle, Lock, Clock } from 'lucide-react';
 import { CharacterStatusManager } from '@/lib/characterStatus';
 
 interface CharacterCardProps {
@@ -123,22 +123,12 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           }`}>
             {character.role}
           </p>
-          {/* Online/Offline status */}
-          <div className="flex items-center space-x-1 mt-1">
-            {isOnline ? (
-              <>
-                <Wifi className="w-3 h-3 text-green-400" />
-                <span className="text-xs text-green-400 font-typewriter tracking-wide">ONLINE</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-3 h-3 text-red-400" />
-                <span className="text-xs text-red-400 font-typewriter tracking-wide">
-                  OFFLINE {timeRemaining > 0 && `(${timeRemaining}s)`}
-                </span>
-              </>
-            )}
-          </div>
+          {/* Status text */}
+          {!isOnline && timeRemaining > 0 && (
+            <p className="text-xs font-typewriter text-red-400 mt-1">
+              Not cooperating ({timeRemaining}s)
+            </p>
+          )}
         </div>
         
         {/* Selection/Availability Indicator */}
@@ -195,11 +185,11 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       {/* Offline tooltip */}
       {!isOnline && (
         <div className="absolute top-full left-0 mt-2 p-2 bg-black/90 border border-red-600/30 rounded-lg text-xs text-gray-300 whitespace-nowrap z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-          <div className="text-red-400 font-semibold">Character Offline</div>
+          <div className="text-red-400 font-semibold">Not Cooperating</div>
           <div className="text-gray-300 mt-1">{offlineReason}</div>
           {timeRemaining > 0 && (
             <div className="text-amber-400 mt-1">
-              Back online in {timeRemaining} seconds
+              Will cooperate again in {timeRemaining} seconds
             </div>
           )}
         </div>

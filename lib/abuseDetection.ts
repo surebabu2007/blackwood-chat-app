@@ -141,16 +141,21 @@ export class AbuseDetectionSystem {
       high: [
         "I must say, Detective Chen, such language is quite unacceptable. I shall not continue this conversation.",
         "Goodness gracious! I cannot believe you would speak to me in such a manner. This is quite shocking.",
-        "I beg your pardon, but I will not tolerate such disrespectful language. This is quite improper."
+        "I beg your pardon, but I will not tolerate such disrespectful language. This is quite improper.",
+        "My word, Detective Chen, I find such conduct utterly reprehensible. I refuse to cooperate with this kind of behavior.",
+        "I should say, Detective Chen, such language is completely inappropriate. I will not participate in this interrogation under these circumstances."
       ],
       medium: [
         "I should say, Detective Chen, such language is not appropriate for our investigation.",
         "My word, Detective Chen, I must ask you to maintain proper decorum during our conversation.",
-        "I must say, such language is quite unbecoming of a professional investigation."
+        "I must say, such language is quite unbecoming of a professional investigation.",
+        "I beg your pardon, Detective Chen, but I cannot cooperate with this kind of behavior.",
+        "Quite so, Detective Chen, I find this manner of questioning quite inappropriate."
       ],
       low: [
         "I should say, Detective Chen, let us maintain proper decorum during our investigation.",
-        "Quite so, Detective Chen, perhaps we could focus on more appropriate matters."
+        "Quite so, Detective Chen, perhaps we could focus on more appropriate matters.",
+        "My word, Detective Chen, I would prefer we conduct this conversation with more civility."
       ]
     };
 
@@ -168,7 +173,10 @@ export class AbuseDetectionSystem {
       "Quite so, Detective Chen, but I believe we should focus on the matter at hand - Victoria's murder.",
       "I should say, Detective Chen, perhaps we could discuss something more pertinent to our investigation.",
       "My word, Detective Chen, I'm not quite sure how that relates to our current situation.",
-      "I beg your pardon, Detective Chen, but I believe we have more pressing matters to discuss."
+      "I beg your pardon, Detective Chen, but I believe we have more pressing matters to discuss.",
+      "I should say, Detective Chen, I cannot cooperate with this line of questioning. It's not appropriate for our investigation.",
+      "My word, Detective Chen, I find this manner of interrogation quite inappropriate. I will not participate in such conversations.",
+      "I must say, Detective Chen, such questions are not suitable for our professional discussion about Victoria's case."
     ];
 
     return responses[Math.floor(Math.random() * responses.length)];
@@ -200,7 +208,12 @@ export class AbuseDetectionSystem {
       `${characterName} seems to need a moment to compose themselves after that inappropriate remark.`,
       `${characterName} has excused themselves from the conversation due to improper conduct.`,
       `${characterName} looks quite shocked and has withdrawn from our discussion.`,
-      `${characterName} appears to be gathering their thoughts after that remark.`
+      `${characterName} appears to be gathering their thoughts after that remark.`,
+      `${characterName} is not going to cooperate with this kind of behavior or conversation.`,
+      `${characterName} refuses to continue this interrogation under such circumstances.`,
+      `${characterName} finds this manner of questioning quite inappropriate and will not participate.`,
+      `${characterName} has decided not to cooperate with this line of questioning.`,
+      `${characterName} will not engage in this kind of inappropriate interrogation.`
     ];
 
     return messages[Math.floor(Math.random() * messages.length)];

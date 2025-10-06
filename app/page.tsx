@@ -53,6 +53,14 @@ export default function HomePage() {
 
     return () => clearInterval(interval);
   }, [currentCharacter]);
+
+  // Auto-dismiss offline popup when countdown ends or character returns online
+  useEffect(() => {
+    if (!error) return;
+    if (!characterOffline || timeUntilOnline <= 0) {
+      clearError();
+    }
+  }, [characterOffline, timeUntilOnline, error, clearError]);
   
   const { investigationState, gameState, resetGame } = useChatStore();
 
@@ -86,40 +94,25 @@ export default function HomePage() {
   };
 
   return (
-    <div 
-      className="min-h-screen relative bg-gray-900"
-      style={{
-        backgroundImage: "url('/images/bg%26logo/BG.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* Subtle overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-black/40 to-black/50"></div>
+    <div className="min-h-screen relative">
+      {/* Simple solid transparent overlay for game integration */}
+      <div className="absolute inset-0 bg-black/20"></div>
       
       
       {/* Network Status */}
       <NetworkStatus />
       {/* Header */}
-      <header className="bg-black/70 backdrop-blur-md border-b border-amber-600/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+      <header className="bg-black/50 backdrop-blur-md border-b border-amber-600/20 sticky top-0 z-50">
+        <div className="w-full px-0">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-              {/* Logo */}
-              <div className="flex-shrink-0">
-                <img 
-                  src="/images/bg&logo/logo.png" 
-                  alt="Blackwood Manor" 
-                  className="h-8 w-auto sm:h-10"
-                />
-              </div>
-              <div className="hidden sm:block text-xs sm:text-sm text-amber-200 font-typewriter font-bold tracking-wider">
-                INVESTIGATION
+            <div className="w-80 sm:w-96 xl:w-[28rem]">
+              {/* Interrogation Subjects Title */}
+              <div className="text-lg sm:text-xl text-amber-200 font-typewriter font-bold tracking-wider text-center">
+                INTERROGATION SUBJECTS
               </div>
             </div>
             
-                <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4 pr-3 sm:pr-4 lg:pr-8">
                   {/* Widget Generator Link */}
                   <a
                     href="/widgets"
@@ -175,7 +168,7 @@ export default function HomePage() {
 
       <div className="flex h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] relative z-20">
         {/* Character Selector - Desktop */}
-        <div className="block w-80 sm:w-96 xl:w-[28rem] bg-black/70 backdrop-blur-md border-r border-amber-600/20 overflow-y-auto">
+        <div className="block w-80 sm:w-96 xl:w-[28rem] bg-black/30 border-r border-amber-600/20 overflow-y-auto">
           <CharacterSelector
             characters={characters}
             selectedCharacter={currentCharacter}
@@ -186,12 +179,12 @@ export default function HomePage() {
 
         {/* Mobile Character Selector */}
         {showMobileMenu && (
-          <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
+          <div className="lg:hidden fixed inset-0 z-40 bg-black/40">
             <motion.div
               initial={{ opacity: 0, x: -300 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -300 }}
-              className="w-96 sm:w-[28rem] h-full bg-black/75 backdrop-blur-md border-r border-amber-600/20 overflow-y-auto"
+              className="w-96 sm:w-[28rem] h-full bg-black/40 border-r border-amber-600/20 overflow-y-auto"
             >
               {/* Mobile Menu Header */}
               <div className="p-4 border-b border-amber-600/20">
@@ -239,7 +232,7 @@ export default function HomePage() {
         )}
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col bg-black/60 backdrop-blur-sm">
+        <div className="flex-1 flex flex-col bg-black/20 relative">
           <ErrorBoundary>
             {/* Chat Container */}
             <ChatContainer
@@ -260,6 +253,42 @@ export default function HomePage() {
               timeUntilOnline={timeUntilOnline}
             />
           </ErrorBoundary>
+          
+          {/* Dark overlay for chat area when character is offline */}
+          {error && characterOffline && (error.includes('offline') || error.includes('unavailable') || error.includes('cooperating')) && (
+            <div className="absolute inset-0 bg-black/70 z-40"></div>
+          )}
+          
+          {/* Error Toast - Centered in Chat Window */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="absolute top-1/2 left-1/2 md:left-[30%] transform -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white px-8 py-4 rounded-lg shadow-lg z-50"
+            >
+              <div className="flex flex-col items-center space-y-2">
+                <span className="font-typewriter text-lg font-bold text-center">{error}</span>
+                {characterOffline && timeUntilOnline > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <span className="font-typewriter text-2xl font-bold text-yellow-300">
+                      {timeUntilOnline}s
+                    </span>
+                    <span className="font-typewriter text-sm text-gray-200">
+                      {currentCharacter?.name ? `until ${currentCharacter.name} returns` : 'until character returns'}
+                    </span>
+                  </div>
+                )}
+                <button
+                  onClick={clearError}
+                  className="text-white hover:text-gray-200 transition-colors mt-2"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Investigation Panel - Desktop */}
@@ -275,25 +304,6 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Error Toast */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
-        >
-          <div className="flex items-center space-x-2">
-            <span>{error}</span>
-            <button
-              onClick={clearError}
-              className="text-white hover:text-gray-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </motion.div>
-      )}
 
       {/* Mobile Investigation Panel */}
       {showInvestigationPanel && (

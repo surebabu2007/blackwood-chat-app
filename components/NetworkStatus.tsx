@@ -93,15 +93,11 @@ export const NetworkStatus: React.FC<NetworkStatusProps> = ({ onNetworkChange })
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-16 right-4 z-50 bg-black/90 backdrop-blur-md border border-amber-600/30 rounded-lg p-3 shadow-lg"
+      className="fixed top-16 right-4 z-50 bg-black/50 backdrop-blur-md border border-amber-600/30 rounded-lg p-2 shadow-lg"
     >
       <div className="flex items-center space-x-2">
-        <div className={`${getStatusColor()}`}>
-          {getStatusIcon()}
+        <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-400' : 'bg-red-400'} ${connectionQuality === 'poor' ? 'bg-yellow-400' : ''}`}>
         </div>
-        <span className="text-sm text-amber-100">
-          {getStatusText()}
-        </span>
         <button
           onClick={() => setShowDetails(!showDetails)}
           className="text-amber-400 hover:text-amber-300 text-xs"

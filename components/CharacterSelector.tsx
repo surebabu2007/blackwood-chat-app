@@ -49,14 +49,9 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-black/85 backdrop-blur-md border-b border-amber-600/20 p-4"
+      className="bg-black/40 backdrop-blur-md border-b border-amber-600/20 p-4"
     >
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6 px-2">
-          <h2 className="text-lg font-typewriter font-bold text-amber-100 tracking-wide">
-            INTERROGATION SUBJECTS
-          </h2>
-        </div>
         
         <div className="space-y-3 px-2">
           {characters.map((character) => {

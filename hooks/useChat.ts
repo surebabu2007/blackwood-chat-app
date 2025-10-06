@@ -43,7 +43,7 @@ export const useChat = () => {
 
     // Check if character is online
     if (!CharacterStatusManager.isCharacterOnline(currentCharacter.id)) {
-      setError('Character is currently offline and cannot respond');
+      setError('Character is not cooperating with the interrogation and cannot respond');
       return;
     }
 
@@ -87,7 +87,7 @@ export const useChat = () => {
 
           addMessage(currentCharacter.id, systemMessage);
           
-          setError('Character is now offline due to inappropriate behavior');
+          setError(`${currentCharacter.name} is not going to cooperate with this kind of behavior or conversation`);
           // Play error sound for offline character
           await typewriterSounds.playErrorSound();
           return;
