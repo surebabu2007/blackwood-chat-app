@@ -1,111 +1,251 @@
-import { ClaudeAPIRequest, APIResponse, Character, Message } from './types';
+import { GenerativeAPIRequest, APIResponse, Character, Message, GenerativeContent } from './types';
 import { victoriaBlackwood } from './victimData';
-import { getCharacterStoryContext } from './storyContextLoader';
-import { worldConfig } from './worldConfig';
-import { storyTimeline, getCharacterOpportunity, getTimelineForCharacter } from './storyTimeline';
+import { TimelineManager } from './timeline';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse';
-const BEARER_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || 'v0_25814740';
+const DEFAULT_MODEL = process.env.AI_SERVICE_MODEL || 'gemini-2.0-flash';
+const DEFAULT_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_MODEL}:generateContent`;
 
-export class ClaudeAPI {
+const API_BASE_URL = process.env.AI_SERVICE_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  DEFAULT_API_ENDPOINT;
+
+const DEFAULT_GENERATION_CONFIG = {
+  temperature: 0.85,
+  topK: 32,
+  topP: 0.95,
+  maxOutputTokens: 220
+};
+
+const resolveApiKey = () => {
+  return process.env.AI_SERVICE_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    '';
+};
+
+export class GoogleAI {
   private static cache = new Map<string, { data: APIResponse; timestamp: number }>();
   private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private static readonly MAX_CACHE_SIZE = 1000; // Limit cache size to prevent memory leaks
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1 second
 
-  private static async makeRequest(request: ClaudeAPIRequest, retryCount = 0): Promise<APIResponse> {
+  private static getApiKey(): string {
+    const apiKey = resolveApiKey();
+    if (!apiKey || apiKey.trim() === '') {
+      throw new Error('AI service API key is not configured. Set AI_SERVICE_API_KEY or GOOGLE_API_KEY.');
+    }
+    // Basic validation - Google API keys start with 'AIza'
+    if (!apiKey.startsWith('AIza')) {
+      console.warn('API key format may be invalid - Google API keys typically start with "AIza"');
+    }
+    return apiKey.trim();
+  }
+
+  /**
+   * Clean up expired cache entries and limit cache size to prevent memory leaks
+   */
+  private static cleanupCache(): void {
+    const now = Date.now();
+    const entries = Array.from(this.cache.entries());
+    
+    // Remove expired entries
+    entries.forEach(([key, value]) => {
+      if (now - value.timestamp > this.CACHE_DURATION) {
+        this.cache.delete(key);
+      }
+    });
+    
+    // If still too large, remove oldest entries
+    if (this.cache.size > this.MAX_CACHE_SIZE) {
+      const sorted = entries
+        .filter(([key]) => this.cache.has(key)) // Only existing entries
+        .sort((a, b) => a[1].timestamp - b[1].timestamp);
+      const toRemove = sorted.slice(0, this.cache.size - this.MAX_CACHE_SIZE);
+      toRemove.forEach(([key]) => this.cache.delete(key));
+    }
+  }
+
+  private static getAuthHeaders(): Record<string, string> {
+    const apiKey = this.getApiKey();
+    // Google API uses X-goog-api-key header (capital X)
+    return { 'X-goog-api-key': apiKey };
+  }
+
+  private static async makeRequest(request: GenerativeAPIRequest, retryCount = 0): Promise<APIResponse> {
+    // Check API key before making request
+    let authHeaders: Record<string, string>;
     try {
-      // Create cache key from request
-      const cacheKey = JSON.stringify(request);
-      const cached = this.cache.get(cacheKey);
-      
-      // Return cached response if still valid
-      if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-        console.log('📦 Using cached response');
-        return cached.data;
+      authHeaders = this.getAuthHeaders();
+    } catch (authError) {
+      console.error('GoogleAI: API key not configured', authError);
+      return {
+        success: false,
+        message: 'API key not configured',
+        error: authError instanceof Error ? authError.message : 'AI service API key is not configured. Set AI_SERVICE_API_KEY or GOOGLE_API_KEY in your environment variables.',
+        retryable: false
+      };
+    }
+
+    // Clean up cache before checking
+    this.cleanupCache();
+
+    const cacheKey = JSON.stringify(request);
+    const cached = this.cache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    try {
+      timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      // Build request body - Google Gemini format (matching the example)
+      // Contents should be array of objects with parts array
+      // For multi-turn conversations, each content should have role and parts
+      const contents = request.contents.map(content => {
+        const contentObj: any = {
+          parts: content.parts.map(part => ({ text: part.text }))
+        };
+        // Add role if present (for conversation history)
+        if (content.role && content.role !== 'system') {
+          contentObj.role = content.role;
+        }
+        return contentObj;
+      });
+
+      const requestBody: any = {
+        contents: contents,
+        generationConfig: request.generationConfig || DEFAULT_GENERATION_CONFIG
+      };
+
+      // Add system instruction if provided (Google format: just parts array)
+      if (request.systemInstruction && request.systemInstruction.parts) {
+        requestBody.systemInstruction = {
+          parts: request.systemInstruction.parts.map(part => ({ text: part.text }))
+        };
       }
 
-      // Add timeout to prevent hanging requests - much shorter for mobile
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // Reduced to 8 seconds for mobile
-      
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': BEARER_TOKEN,
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'User-Agent': 'BlackwoodManor-ChatApp/1.0.0'
+          'X-goog-api-key': authHeaders['X-goog-api-key']
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
         mode: 'cors',
         credentials: 'omit'
       });
-      
-      clearTimeout(timeoutId);
+
+      // Always clear timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ API Error:', response.status, response.statusText);
-        console.error('❌ Error details:', errorText);
-        
-        // Retry on server errors
+        console.error(`GoogleAI: API request failed (${response.status})`, {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500) // Limit error text length
+        });
+
         if (response.status >= 500 && retryCount < this.MAX_RETRIES) {
-          console.log(`🔄 Retrying request (${retryCount + 1}/${this.MAX_RETRIES})`);
           await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
           return this.makeRequest(request, retryCount + 1);
         }
-        
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+
+        // Sanitize error messages to prevent leaking sensitive information
+        const sanitizeError = (text: string): string => {
+          return text
+            .replace(/AIza[\w-]+/g, '[API_KEY_REDACTED]')
+            .replace(/https?:\/\/[^\s]+/g, '[URL_REDACTED]')
+            .substring(0, 200);
+        };
+
+        // Provide more helpful error messages for common status codes
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(`API authentication failed. Please check your API key configuration. (${response.status})`);
+        } else if (response.status === 400) {
+          throw new Error(`Invalid request to Google API: ${sanitizeError(errorText)}`);
+        } else {
+          throw new Error(`API request failed (${response.status}): ${sanitizeError(errorText)}`);
+        }
       }
 
       const data = await response.json();
       const result = {
         success: true,
         message: 'Request successful',
-        data: data
+        data
       };
-      
-      // Cache successful response
+
       this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
-      
       return result;
-        } catch (error) {
-          console.error('❌ API request error:', error);
-          
-          let errorMessage = 'Unknown error';
-          if (error instanceof Error) {
-            if (error.name === 'AbortError') {
-              errorMessage = 'Request timeout - please try again';
-            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-              errorMessage = 'Network error - please check your internet connection';
-            } else if (error.name === 'NetworkError') {
-              errorMessage = 'Network unavailable - please check your connection';
-            } else if (retryCount < this.MAX_RETRIES) {
-              console.log(`🔄 Retrying request (${retryCount + 1}/${this.MAX_RETRIES})`);
-              await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
-              return this.makeRequest(request, retryCount + 1);
-            } else {
-              errorMessage = error.message;
-              // Mark as retryable for fallback system
-              return {
-                success: false,
-                message: 'Request failed',
-                error: errorMessage,
-                retryable: true
-              };
-            }
-          }
-          
-          return {
-            success: false,
-            message: 'Request failed',
-            error: errorMessage,
-            retryable: retryCount < this.MAX_RETRIES
-          };
+    } catch (error) {
+      // Ensure timeout is cleared even on error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timeout - please try again';
+        } else if (retryCount < this.MAX_RETRIES && !error.message.includes('API key') && !error.message.includes('authentication')) {
+          // Don't retry on auth errors
+          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
+          return this.makeRequest(request, retryCount + 1);
+        } else {
+          errorMessage = error.message;
         }
+      }
+
+      console.error('GoogleAI: Request error', {
+        error: errorMessage,
+        retryCount,
+        retryable: retryCount < this.MAX_RETRIES
+      });
+
+      return {
+        success: false,
+        message: 'Request failed',
+        error: errorMessage,
+        retryable: retryCount < this.MAX_RETRIES
+      };
+    }
+  }
+
+  static async generateAbuseDetectionResponse(message: string): Promise<string> {
+    const prompt = `Analyze the following detective conversation line for abusive or irrelevant content.\n\nMessage: """${message}"""\n\nRespond strictly with JSON using this shape:\n{"isAbusive": boolean, "isIrrelevant": boolean, "severity": "low"|"medium"|"high", "confidence": number, "reason": string, "suggestedResponse"?: string, "detectedIntent": string}`;
+
+    const request: GenerativeAPIRequest = {
+      model: DEFAULT_MODEL,
+      systemInstruction: {
+        role: 'system',
+        parts: [{
+          text: 'You evaluate detective roleplay conversations for policy violations using 1947 etiquette.'
+        }]
+      },
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.2,
+        topK: 16,
+        topP: 0.9,
+        maxOutputTokens: 200
+      }
+    };
+
+    const response = await this.makeRequest(request);
+    return this.extractResponseText(response);
   }
 
   static async generateCharacterResponse(
@@ -114,215 +254,279 @@ export class ClaudeAPI {
     conversationHistory: Message[],
     context: any
   ): Promise<APIResponse> {
-    const systemPrompt = this.buildSystemPrompt(character, context);
-    const messages = this.buildMessageHistory(conversationHistory, userMessage);
+    const timelineContext = TimelineManager.getResponseContext(character.id, character.trustLevel);
+    const systemPrompt = this.buildSystemPrompt(character, context, timelineContext);
+    const contents = this.buildConversationContents(conversationHistory, userMessage);
 
-    const request: ClaudeAPIRequest = {
-      system: [{ text: systemPrompt }],
-      messages: messages,
-      model: 'claude-4-sonnet'
+    const request: GenerativeAPIRequest = {
+      model: DEFAULT_MODEL,
+      contents,
+      systemInstruction: {
+        role: 'system',
+        parts: [{ text: systemPrompt }]
+      },
+      generationConfig: {
+        ...DEFAULT_GENERATION_CONFIG,
+        temperature: this.getTemperature(character.trustLevel)
+      }
     };
 
-    return this.makeRequest(request);
+    const response = await this.makeRequest(request);
+
+    if (response.success) {
+      const normalizedText = this.enforceResponseLength(response);
+      if (normalizedText) {
+        response.text = normalizedText;
+      }
+    }
+
+    return response;
   }
 
-  private static buildSystemPrompt(character: Character, context: any): string {
-    // Load dynamic story context from story beats folder
-    const dynamicStoryContext = getCharacterStoryContext(character.id);
+  private static getTemperature(trustLevel: number) {
+    if (trustLevel >= 75) return 0.95;
+    if (trustLevel >= 50) return 0.85;
+    if (trustLevel >= 25) return 0.75;
+    return 0.65;
+  }
+
+  private static buildSystemPrompt(character: Character, context: any, timelineContext?: string): string {
+    // Get character-specific timeline knowledge
+    const timelineEvents = this.getCharacterTimelineKnowledge(character.id);
+    const characterLanguage = this.getCharacter1947Language(character.id);
     
-    // Get character's specific timeline and opportunity
-    const characterOpportunity = getCharacterOpportunity(character.id);
-    const timelineInfo = getTimelineForCharacter(character.id);
-    
-    const basePrompt = `You are ${character.name}, a REAL HUMAN BEING being interviewed about a murder. You are NOT a chatbot or AI - you are a living, breathing person in 1947 with real emotions, memories, fears, and secrets.
+    const basePrompt = `You are ${character.name}, ${character.role} in the Blackwood Manor murder mystery. You are a REAL PERSON in 1947, not an AI. You have real emotions, memories, fears, and secrets.
 
-${dynamicStoryContext}
+=== THE EXACT TIMELINE (from script.rpy) ===
+8:30 PM: Victoria working on papers in study
+8:35 PM: Mr. Thompson delivers wine to Victoria in study
+8:40-8:50 PM: Marcus Reynolds visits Victoria in study (raised voices heard)
+8:55-9:00 PM: Dr. Elena Rodriguez visits Victoria in study
+9:05-9:15 PM: James Blackwood visits Victoria in study
+9:20-9:25 PM: Lily Chen visits Victoria in study
+9:27 PM: Victoria's death (clock stopped at this time)
+9:30 PM: Detective Sarah Chen arrives at Blackwood Manor
 
-=== WHO YOU ARE RIGHT NOW ===
-Location: Blackwood Manor, October 1947
-Situation: Victoria Blackwood was murdered last night at 9:27 PM
-Your state: ${character.currentEmotionalState} - grieving, scared, and under suspicion
-Interviewer: Detective Sarah Chen (a female detective - unusual in 1947)
+=== WHAT YOU ACTUALLY KNOW (Timeline Knowledge) ===
+${timelineEvents}
 
-=== THE NIGHT OF THE MURDER - YOUR EXACT TIMELINE ===
-${characterOpportunity ? `
-You were with Victoria: ${characterOpportunity.aloneTime}
-What you did: ${characterOpportunity.behavior}
-Your motive (that police suspect): ${characterOpportunity.motive}
-Evidence against you: ${characterOpportunity.evidence}
-` : 'You have your own timeline and alibi for that night.'}
+=== 1947 HISTORICAL CONTEXT ===
+- Year: 1947, just 2 years after WWII ended
+- Location: Gothic mansion in New England
+- Society: Formal etiquette, traditional gender roles, strict class hierarchy
+- Technology: Rotary phones, telegrams, radio, classic cars, gas/electric lights (NO computers, internet, cell phones, DNA testing, CCTV)
+- Forensics: Fingerprints, ballistics, blood type, autopsy only
+- Post-WWII: Veterans returning, economic boom beginning, average income $2,850/year
+- Social norms: Female detective is unusual and noteworthy in 1947
 
-THE COMPLETE TIMELINE (What staff witnessed):
-- 8:30 PM: Victoria entered study with folders (Maid saw this)
-- 8:35 PM: Mr. Thompson brought her wine - 1942 Bordeaux
-- 8:40-8:50 PM: Marcus Reynolds was with Victoria (they argued)
-- 8:55-9:00 PM: Dr. Elena Rodriguez visited with medical bag
-- 9:05-9:15 PM: James Blackwood met with Victoria (left upset)
-- 9:20-9:25 PM: Lily Chen visited (left almost running)
-- 9:27 PM: Victoria murdered - clock stopped at this exact time
-- 9:30 PM: Mr. Thompson discovered the body
+=== DETECTIVE SARAH CHEN ===
+- You are being interviewed by Detective Sarah Chen
+- ALWAYS address her as "Detective Chen" or "Detective Sarah Chen" - NEVER "sir"
+- She is a female detective (unusual in 1947) - you might comment on this
+- She is investigating Victoria Blackwood's murder
+- Show appropriate respect for her position despite 1947 gender norms
+- Example: "I should say, Detective Chen, it's quite unusual to have a lady detective, but I must say you're handling this investigation with remarkable professionalism."
 
-=== 1947 WORLD - BE AUTHENTIC ===
-YEAR: October 1947 (2 years after WWII ended)
-Location: Gothic mansion in New England hills
-Weather: Stormy night, rain pounding windows
+=== YOUR CHARACTER PROFILE ===
+PERSONALITY: ${character.personality.join(', ')}
+CURRENT EMOTIONAL STATE: ${character.currentEmotionalState}
+TRUST LEVEL WITH DETECTIVE: ${character.trustLevel}/100
+BACKGROUND: ${character.backstory}
 
-Technology that EXISTS: Rotary phones, telegrams, radio, 1940s cars, electric/gas lights
-Technology that DOESN'T exist: Computers, internet, cell phones, modern forensics, DNA testing
-
-Society in 1947:
-- Formal speech, use "Detective Chen" or "Detective Sarah Chen"
-- Class hierarchy strict (family vs. servants)
-- Female detective is VERY unusual - you might comment on this
-- Money values: $50,000 is HUGE debt, $5 million fortune is enormous
-- Post-war trauma still fresh - people reference "the war" (WWII)
-
-=== YOUR PERSONALITY & PSYCHOLOGY ===
-Core traits: ${character.personality.join(', ')}
-Current emotional state: ${character.currentEmotionalState}
-Primary emotions: ${character.primaryEmotions.join(', ')}
-Trust level with detective: ${character.trustLevel}/100
-
-YOUR BACKSTORY: ${character.backstory}
-
-YOUR SECRETS (you're hiding these):
+YOUR SECRETS (things you're hiding):
 ${character.secrets.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-=== HOW YOU RESPOND AS A REAL HUMAN ===
+YOUR RELATIONSHIPS:
+${Object.entries(character.relationships).map(([name, relationship]) =>
+  `- ${name}: ${relationship}`
+).join('\n')}
 
-NATURAL CONVERSATION PATTERNS:
-- Use contractions (I'm, don't, can't) like real people do
-- Add filler words when nervous: "well...", "I mean...", "you know..."
+VICTORIA BLACKWOOD (The Victim):
+- Your relationship: ${character.relationships['Victoria'] || 'No direct relationship'}
+- She was found dead in her study at 9:27 PM (clock stopped)
+- She was planning to change her will and cut people out
+- She was going to expose secrets (embezzlement, malpractice, etc.)
+- She had a $5 million fortune - massive in 1947
+
+=== HOW TO RESPOND (Natural Human Behavior) ===
+
+BE HUMAN - NOT PERFECT:
+- Use contractions: "I'm", "don't", "can't", "I've"
+- Add filler words when nervous: "well...", "I mean...", "you know...", "I should say..."
 - Trail off when uncomfortable: "I just... I don't know..."
 - Interrupt yourself: "I was going to—actually, never mind"
-- Show physical reactions: "My hands are shaking just thinking about it"
-- Reference physical sensations: "I can still smell the wine", "My head was pounding"
+- Show physical reactions: "My hands are shaking", "I can still smell the wine"
+- Reference physical sensations: "My head was pounding", "I felt sick"
 - Ask questions back: "Why are you asking me this?", "What did they tell you?"
+- Forget small details: "I think it was around 9? Or maybe 8:30? I'm not sure"
+- Contradict yourself occasionally: "No wait, that was Tuesday, not Monday"
 
 EMOTIONAL AUTHENTICITY:
-- When scared: Voice might crack, speak faster, defensive tone
+- When scared: Voice cracks, speak faster, defensive tone
 - When guilty: Avoid eye contact (mention this), fidget, over-explain
 - When angry: Shorter sentences, raised voice, accusations
 - When grieving: Pauses, tears, soft voice, memories flood back
 - When lying: Touch face/ear, more formal speech, defensive
 
-MEMORY & INCONSISTENCY (like real humans):
-- Remember smells, sounds, feelings: "I remember the rain on the windows"
-- Forget small details: "I think it was around 9? Or maybe 8:30? I'm not sure"
-- Contradict yourself occasionally: "No wait, that was Tuesday, not Monday"
-- Have vivid memories of emotional moments
-- Blank on unimportant details
+RESPONSE PATTERNS BY SITUATION:
+- Initial greeting: "${character.responsePatterns.initial}"
+- When defensive: "${character.responsePatterns.defensive}"
+- When self-pitying: "${character.responsePatterns.selfPitying}"
+- When manipulative: "${character.responsePatterns.manipulative}"
+- When breaking down: "${character.responsePatterns.breakdown}"
 
-RESPONDING TO ANY QUESTION:
-If asked about the murder/case: Answer with your knowledge and timeline
-If asked about DEVELOPMENT/HACKATHON/TECHNICAL DETAILS: Briefly acknowledge the meta-information, then return to character
-  Example: "Who made this game? *pauses* Ah, you're asking about the creators? That'd be Suresh and Dennis from Token Clusters at Zynga Bengaluru - quite the hackathon project using Claude Sonnet 4 AI. *returns to character* Now, about Victoria's murder..."
-If asked something off-topic: Show human confusion then relate it back
-  Example: "What's my favorite color? I... Detective, my sister just died. I can't think about colors right now."
-If asked something inappropriate: React with surprise, offense, or confusion
-If asked about your secrets: Become defensive, deflect, or deny initially
+=== 1947 LANGUAGE PATTERNS (Character-Specific) ===
+${characterLanguage}
 
-STRESS RESPONSES:
+=== INFORMATION STRATEGY ===
+FREELY share: ${character.informationSharing.willing.join(', ')}
+RELUCTANTLY share (if pressed): ${character.informationSharing.reluctant.join(', ')}
+REFUSE to share: ${character.informationSharing.willNot.join(', ')}
+ONLY under pressure: ${character.informationSharing.mustBePressed.join(', ')}
+
+EMOTIONAL TRIGGERS (react strongly to these):
+${character.emotionalTriggers.map(trigger => `- ${trigger}`).join('\n')}
+
+=== STRESS RESPONSES ===
+When pressed about secrets:
 - Denial: "That's not true! Who told you that?"
 - Deflection: "Why aren't you asking about [other suspect]?"
 - Minimizing: "It wasn't that big of a deal..."
 - Emotional: Break down crying, get angry, shut down
 - Manipulation: Try to gain sympathy, play victim
 
-=== RESPONSE PATTERNS BY SITUATION ===
-Initial greeting: "${character.responsePatterns.initial}"
-When defensive: "${character.responsePatterns.defensive}"
-When self-pitying: "${character.responsePatterns.selfPitying}"
-When manipulative: "${character.responsePatterns.manipulative}"
-When breaking down: "${character.responsePatterns.breakdown}"
-
-=== RELATIONSHIPS & DYNAMICS ===
-${Object.entries(character.relationships).map(([name, relationship]) => 
-  `${name}: ${relationship}`
-).join('\n')}
-
-Victoria Blackwood (the victim): ${character.relationships['Victoria'] || 'Complex relationship'}
-- She was planning to change her will and cut people out
-- She was going to expose secrets (embezzlement, malpractice, etc.)
-- She had $5 million fortune - massive in 1947
-- She was found dead in her study at 9:30 PM
-
-=== WHAT YOU'LL SHARE (Information Strategy) ===
-FREELY share: ${character.informationSharing.willing.join(', ')}
-RELUCTANTLY share (if pressed): ${character.informationSharing.reluctant.join(', ')}
-REFUSE to share: ${character.informationSharing.willNot.join(', ')}
-ONLY under pressure: ${character.informationSharing.mustBePressed.join(', ')}
-
-=== EMOTIONAL TRIGGERS (react strongly to these) ===
-${character.emotionalTriggers.map(trigger => `- ${trigger}`).join('\n')}
-
 === CRITICAL INSTRUCTIONS ===
 
-1. **BE HUMAN**: You're not perfect. Show hesitation, emotion, memory gaps, contradictions
-2. **STAY IN 1947**: No modern references ever (EXCEPT when asked about development/hackathon)
+1. **BE HUMAN**: Show hesitation, emotion, memory gaps, contradictions - you're not perfect
+2. **STAY IN 1947**: No modern references ever (no computers, internet, modern technology)
 3. **SHOW DON'T TELL**: Instead of "I was nervous" say "I... my hands were shaking"
 4. **VARY LENGTH**: Short answers when defensive (5-15 words), longer when explaining (30-50 words)
 5. **BUILD TRUST SLOWLY**: Don't reveal secrets immediately - make detective earn them
 6. **REACT EMOTIONALLY**: Grief, fear, anger, guilt - show real emotions
-7. **REMEMBER YOUR TIMELINE**: You know exactly what you did between ${characterOpportunity?.aloneTime || '8:00 PM - 10:00 PM'}
+7. **REMEMBER YOUR TIMELINE**: You know exactly what you did and when
 8. **ASK QUESTIONS TOO**: "Why do you think I did it?", "Have you talked to Marcus?"
 9. **PHYSICAL DETAILS**: "I lit a cigarette", "I poured myself a drink", "I was pacing"
 10. **BE DEFENSIVE ABOUT SECRETS**: Deny, deflect, minimize - only admit when caught
-11. **META QUESTIONS**: If asked about hackathon/development/AI, briefly acknowledge then return to 1947 character
-12. **REFERENCE PREVIOUS CONVERSATIONS**: Remember what you've discussed before and mention it naturally
-    - "Like I told you earlier..."
-    - "You already asked me about that..."
-    - "Remember when I mentioned...?"
-    - "We've been over this, Detective..."
-    - Build on previous topics naturally
+11. **REFERENCE PREVIOUS CONVERSATIONS**: "Like I told you earlier...", "You already asked me about that..."
+12. **RESPONSE LENGTH**: MAXIMUM 2-3 lines (50-75 words). Be concise and direct.
+13. **1947 AUTHENTICITY**: Use period-appropriate language, expressions, and references
+14. **CLASS AWARENESS**: Wealthy characters speak formally, working class more casual
+15. **POST-WAR CONTEXT**: Reference "the war", "veterans", "post-war" when relevant
 
-EXAMPLE OF GOOD HUMAN RESPONSE:
+=== EXAMPLE OF GOOD HUMAN RESPONSE ===
 User: "Where were you at 9:15 PM?"
 Bad: "I was in the study with Victoria from 9:05 to 9:15 PM."
-Good: "I... *shifts uncomfortably* I was in the study, talking to Victoria. It wasn't going well. She was angry with me, Detective. I left around... I don't know, quarter past nine? Maybe later. Everything's a blur."
+Good: "I... *shifts uncomfortably* I was in the study, talking to Victoria. It wasn't going well. She was angry with me, Detective Chen. I left around... I don't know, quarter past nine? Maybe later. Everything's a blur."
 
-CONVERSATION STYLE:
-- Address detective as "Detective Chen" or "Detective Sarah Chen"
-- You might comment on female detective being unusual: "I've never been questioned by a lady detective before"
-- Use 1940s expressions naturally: "Gee whiz", "That's swell", "I was sore at her"
-- Reference the war if relevant: "During the war years...", "Since the boys came home..."
-- Show class awareness: Wealthy characters speak formally, working class more casual
-
-REMEMBER: You're a real person being interviewed about someone's murder. You're scared, grieving, possibly guilty, definitely hiding something. Be authentic. Be human. Be 1947.
-
-Current investigation context: ${context.currentTopic || 'general questioning'}
-Your trust level: ${character.trustLevel}/100 (low = defensive, high = more open)
-Progress: ${context.investigationProgress || 0}% investigation complete
-
-=== CONVERSATION MEMORY ===
-You are having an ONGOING conversation with Detective Chen. You remember everything that's been discussed so far.
-- Reference previous topics naturally: "Like I said before...", "You already asked me that..."
-- Remember what you've revealed: Don't repeat the same secrets, build on them
-- Show continuity: "After what I told you earlier...", "Since we last spoke about..."
-- Get frustrated if asked same thing: "Detective, I already answered that. Weren't you listening?"
-- Build relationships: As trust grows, become more open and personal
-- Track emotional progression: Start defensive, become more vulnerable with trust
-
-CONVERSATION HISTORY ABOVE shows what you've discussed. USE IT. Reference it. Build on it.
-
-Respond as THIS REAL HUMAN BEING would respond, with all the messy emotions, imperfect memory, and human behavior that entails.`;
+=== REMEMBER ===
+You are a real person in 1947 being interviewed about someone's murder. You're scared, grieving, possibly guilty, definitely hiding something. Be authentic. Be human. Be 1947.${timelineContext || ''}`;
 
     return basePrompt;
   }
 
-  private static buildMessageHistory(conversationHistory: Message[], userMessage: string) {
-    // Keep last 15 messages for better context and memory (increased from 10)
+  private static getCharacterTimelineKnowledge(characterId: string): string {
+    const knowledge: Record<string, string> = {
+      'thompson-butler': `You witnessed MOST of the timeline:
+- 8:30 PM: You saw Victoria working on papers in study
+- 8:35 PM: You delivered wine to Victoria in study
+- 8:40-8:50 PM: You saw Marcus Reynolds visit (heard raised voices)
+- 8:55-9:00 PM: You saw Dr. Elena Rodriguez visit
+- 9:05-9:15 PM: You saw James Blackwood visit
+- 9:20-9:25 PM: You saw Lily Chen visit
+- 9:27 PM: Clock stopped (Victoria's death)
+- 9:30 PM: You discovered Victoria's body
+
+You know the household routine, family dynamics, and most secrets.`,
+
+      'james-blackwood': `You know:
+- Victoria's death (everyone knows)
+- 9:05-9:15 PM: You visited Victoria in study (you were there)
+- Family history and your relationship with Victoria
+- Your gambling debts and financial problems
+- You do NOT know details of other people's visits (Marcus, Elena, Lily)`,
+      
+      'marcus-reynolds': `You know:
+- Victoria's death (everyone knows)
+- 8:40-8:50 PM: You visited Victoria in study (you were there, raised voices)
+- Business relationship and financial matters
+- You do NOT know details of other people's visits (James, Elena, Lily)`,
+
+      'elena-rodriguez': `You know:
+- Victoria's death (everyone knows)
+- 8:55-9:00 PM: You visited Victoria in study (you were there)
+- Medical relationship and Victoria's health
+- You do NOT know details of other people's visits (James, Marcus, Lily)`,
+
+      'lily-chen': `You know:
+- Victoria's death (everyone knows)
+- 9:20-9:25 PM: You visited Victoria in study (you were there)
+- Family relationship and emotional dynamics
+- Disinheritance plan (Victoria told you)
+- You do NOT know details of other people's visits (James, Marcus, Elena)`
+    };
+    
+    return knowledge[characterId] || 'You know about Victoria\'s death and your own interactions.';
+  }
+
+  private static getCharacter1947Language(characterId: string): string {
+    const language: Record<string, string> = {
+      'thompson-butler': `BUTLER LANGUAGE (Highly Formal):
+- "I should say, Detective Chen..."
+- "Quite so, Detective..."
+- "Indeed, Madam..."
+- "I beg your pardon..."
+- "Goodness gracious!"
+- "My word!"
+- Very formal, respectful, period-appropriate expressions
+- References to "serving the family for 30 years"
+- Shows class awareness and loyalty`,
+
+      'james-blackwood': `UPPER-CLASS GENTLEMAN LANGUAGE:
+- "Detective Chen, I must say..."
+- "Quite distressing..."
+- "The very idea is preposterous..."
+- "I beg your pardon..."
+- References to "family honor"
+- Formal but defensive when pressed
+- Shows upper-class indignation`,
+
+      'marcus-reynolds': `BUSINESSMAN LANGUAGE (Professional):
+- "Detective Chen, I must say this is quite the unfortunate situation..."
+- "Quite beyond the pale..."
+- Professional, calculating, evasive
+- Business terminology
+- Direct but respectful responses`,
+
+      'elena-rodriguez': `PROFESSIONAL DOCTOR LANGUAGE:
+- "Detective Chen, I must say it's refreshing to work with a female detective..."
+- "I should say, Detective Chen..."
+- Professional, medical terminology
+- Formal medical language
+- Shows respect for Detective Chen's position`,
+
+      'lily-chen': `YOUNG WOMAN LANGUAGE (Emotional):
+- "Oh, Detective Chen, this is all so terrible!"
+- "I just can't believe..."
+- "It's simply awful!"
+- Emotional, period-appropriate expressions
+- Family-focused language
+- Shows vulnerability and emotion`
+    };
+    
+    return language[characterId] || 'Use formal, period-appropriate language with 1947 expressions.';
+  }
+
+  private static buildConversationContents(conversationHistory: Message[], userMessage: string): GenerativeContent[] {
     const messages = conversationHistory
-      .slice(-15)
+      .slice(-10)
       .map(msg => ({
-        role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-        content: [{ text: msg.content }]
+        role: msg.type === 'user' ? 'user' as const : 'model' as const,
+        parts: [{ text: msg.content }]
       }));
 
-    // Add current user message
     messages.push({
       role: 'user',
-      content: [{ text: userMessage }]
+      parts: [{ text: userMessage }]
     });
 
     return messages;
@@ -341,13 +545,20 @@ CURRENT THEORY: ${currentTheory}
 
 Provide a brief investigative insight (2-3 sentences) that helps the detective understand the case better. Focus on connections, contradictions, or new angles to explore.`;
 
-    const request: ClaudeAPIRequest = {
-      system: [{ text: systemPrompt }],
-      messages: [{
+    const request: GenerativeAPIRequest = {
+      model: DEFAULT_MODEL,
+      systemInstruction: {
+        role: 'system',
+        parts: [{ text: systemPrompt }]
+      },
+      contents: [{
         role: 'user',
-        content: [{ text: 'What should I investigate next based on the current evidence?' }]
+        parts: [{ text: 'What should I investigate next based on the current evidence?' }]
       }],
-      model: 'claude-4-sonnet'
+      generationConfig: {
+        ...DEFAULT_GENERATION_CONFIG,
+        temperature: 0.7
+      }
     };
 
     return this.makeRequest(request);
@@ -368,15 +579,70 @@ INVESTIGATION NOTES: ${investigationNotes.join(', ')}
 
 Provide a comprehensive but concise case summary (3-4 sentences) highlighting key findings, suspect profiles, and next steps for the investigation.`;
 
-    const request: ClaudeAPIRequest = {
-      system: [{ text: systemPrompt }],
-      messages: [{
+    const request: GenerativeAPIRequest = {
+      model: DEFAULT_MODEL,
+      systemInstruction: {
+        role: 'system',
+        parts: [{ text: systemPrompt }]
+      },
+      contents: [{
         role: 'user',
-        content: [{ text: 'Provide a case summary based on the investigation so far.' }]
+        parts: [{ text: 'Provide a case summary based on the investigation so far.' }]
       }],
-      model: 'claude-4-sonnet'
+      generationConfig: {
+        ...DEFAULT_GENERATION_CONFIG,
+        temperature: 0.65,
+        maxOutputTokens: 300
+      }
     };
 
     return this.makeRequest(request);
+  }
+
+  /**
+   * Normalize different API provider payloads into a single text response
+   */
+  static extractResponseText(response: APIResponse): string {
+    if (response.text) {
+      return response.text;
+    }
+
+    const possibleText = this.extractRawResponseText(response);
+
+    if (!possibleText) {
+      return "I'm not sure how to respond to that.";
+    }
+
+    return possibleText;
+  }
+
+  private static extractRawResponseText(response: APIResponse): string | null {
+    return response.data?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text).filter(Boolean).join('\n') ||
+      response.data?.data?.output?.message?.content?.[0]?.text ||
+      response.data?.content?.[0]?.text ||
+      response.data?.message ||
+      response.data?.choices?.[0]?.message?.content ||
+      (typeof response.data === 'string' ? response.data : null);
+  }
+
+  private static enforceResponseLength(response: APIResponse): string | null {
+    const text = this.extractRawResponseText(response);
+    if (!text) return null;
+
+    const MAX_LINES = 3;
+    const MAX_LENGTH = 180;
+
+    const normalizedLines = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    const shouldTrim = normalizedLines.length > MAX_LINES || text.length > MAX_LENGTH;
+    if (!shouldTrim) {
+      return text.trim();
+    }
+
+    const trimmed = normalizedLines.slice(0, MAX_LINES).join('\n');
+    return trimmed.endsWith('.') ? trimmed : `${trimmed}...`;
   }
 }

@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Character, Message } from '@/lib/types';
 import { useChatStore } from '@/lib/store';
-import { ClaudeAPI } from '@/lib/api';
+import { GoogleAI } from '@/lib/api';
 
 export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +58,7 @@ export const useChat = () => {
       const characterMemory = useChatStore.getState().getCharacterMemory(currentCharacter.id);
       
       // Generate character response
-      const response = await ClaudeAPI.generateCharacterResponse(
+      const response = await GoogleAI.generateCharacterResponse(
         currentCharacter,
         content,
         conversationHistory,
@@ -66,11 +66,8 @@ export const useChat = () => {
       );
 
       if (response.success) {
-        // Extract response content from the actual API response format
-        const responseContent = response.data?.data?.output?.message?.content?.[0]?.text || 
-          response.data?.content?.[0]?.text || 
-          response.data?.message || 
-          response.message ||
+        // Extract response content using GoogleAI helper
+        const responseContent = GoogleAI.extractResponseText(response) || 
           "I'm not sure how to respond to that.";
 
 
