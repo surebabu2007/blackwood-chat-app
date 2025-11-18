@@ -46,13 +46,13 @@ export const DebugPanel: React.FC = () => {
       });
     }
 
-    // Test 2: API endpoint connectivity
+    // Test 2: API endpoint connectivity (server health check)
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
-      const response = await fetch('https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse', {
-        method: 'HEAD',
+      const response = await fetch('/api/health', {
+        method: 'GET',
         mode: 'cors',
         cache: 'no-cache',
         signal: controller.signal
@@ -92,14 +92,14 @@ export const DebugPanel: React.FC = () => {
 
     // Test 4: Environment variables
     const hasApiUrl = !!process.env.NEXT_PUBLIC_API_BASE_URL;
-    const hasApiToken = !!process.env.NEXT_PUBLIC_API_TOKEN;
+    const hasServerKey = process.env.NEXT_PUBLIC_HAS_SERVER_API_KEY === 'true';
     
     results.push({
       timestamp: new Date().toISOString(),
       test: 'Environment Configuration',
-      status: hasApiUrl && hasApiToken ? 'success' : 'warning',
+      status: hasApiUrl && hasServerKey ? 'success' : 'warning',
       message: 'Environment variables check',
-      details: `API URL: ${hasApiUrl ? 'Set' : 'Missing'}, API Token: ${hasApiToken ? 'Set' : 'Missing'}`
+      details: `API URL: ${hasApiUrl ? 'Set' : 'Missing'}, Secure API Key: ${hasServerKey ? 'Configured' : 'Missing'}`
     });
 
     setDebugInfo(results);

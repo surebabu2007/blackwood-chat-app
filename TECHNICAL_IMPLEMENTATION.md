@@ -21,12 +21,12 @@
 
 ## 🏗️ System Overview
 
-The chat system is built as a **modular, state-driven architecture** that integrates with Claude Sonnet 4 via a custom API endpoint. It maintains persistent character memories, manages conversation contexts, and provides real-time interactive experiences.
+The chat system is built as a **modular, state-driven architecture** that integrates with Google Gemini 1.5 Flash via a custom API endpoint. It maintains persistent character memories, manages conversation contexts, and provides real-time interactive experiences.
 
 ### **Core Components:**
 - **Frontend**: Next.js 14 with TypeScript
 - **State Management**: Zustand with persistence
-- **LLM Integration**: Claude Sonnet 4 via custom API
+- **LLM Integration**: Google Gemini (Generative Language API) via secure server proxy
 - **Memory System**: Character-specific conversation history
 - **UI Framework**: React with Framer Motion animations
 
@@ -56,7 +56,7 @@ graph TB
     end
     
     subgraph "LLM Integration"
-        M[Claude Sonnet 4] --> N[Response Parser]
+        M[Google Gemini 1.5 Flash] --> N[Response Parser]
         N --> O[Content Extractor]
         O --> P[Emotional Tone Analyzer]
     end
@@ -129,38 +129,41 @@ SECRETS YOU KNOW: ${character.secrets.join(', ')}
 
 ### **3. API Request Construction**
 ```typescript
-// Build structured request for Claude API
-const request: ClaudeAPIRequest = {
-  system: [{ text: systemPrompt }],
-  messages: [
-    // Previous conversation history (last 10 messages)
+// Build structured request for Google Gemini
+const request: GenerativeAPIRequest = {
+  model: 'gemini-1.5-flash-latest',
+  systemInstruction: {
+    role: 'system',
+    parts: [{ text: systemPrompt }]
+  },
+  contents: [
     ...conversationHistory.slice(-10).map(msg => ({
-      role: msg.type === 'user' ? 'user' : 'assistant',
-      content: [{ text: msg.content }]
+      role: msg.type === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }]
     })),
-    // Current user message
     {
       role: 'user',
-      content: [{ text: userMessage }]
+      parts: [{ text: userMessage }]
     }
   ],
-  model: 'claude-4-sonnet'
+  generationConfig: {
+    temperature: 0.85,
+    topK: 32,
+    topP: 0.95,
+    maxOutputTokens: 220
+  }
 };
 ```
 
 ### **4. LLM Response Processing**
 ```typescript
-// Process Claude's response
-const response = await ClaudeAPI.generateCharacterResponse(
+// Process Google Gemini response
+const response = await GoogleAI.generateCharacterResponse(
   character, userMessage, conversationHistory, characterMemory
 );
 
 if (response.success && response.data) {
-  // Extract response content from nested API structure
-  const responseContent = response.data.data?.output?.message?.content?.[0]?.text || 
-    response.data.content?.[0]?.text || 
-    response.data.message || 
-    "I'm not sure how to respond to that.";
+  const responseContent = GoogleAI.extractResponseText(response);
 
   // Create character message with emotional analysis
   const characterMessage: Message = {
@@ -231,27 +234,30 @@ export const useChatStore = create<ChatStore>()(
 
 ### **Request Flow**
 ```typescript
-class ClaudeAPI {
-  private static async makeRequest(request: ClaudeAPIRequest): Promise<APIResponse> {
+class GoogleAI {
+  private static async makeRequest(request: GenerativeAPIRequest): Promise<APIResponse> {
     try {
-      // 1. Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      // 2. Make API request
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${BEARER_TOKEN}`,
+          'Accept': 'application/json',
+          ...this.getAuthHeaders()
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          contents: request.contents,
+          systemInstruction: request.systemInstruction,
+          generationConfig: request.generationConfig ?? DEFAULT_GENERATION_CONFIG,
+          safetySettings: request.safetySettings ?? DEFAULT_SAFETY_SETTINGS
+        }),
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
 
-      // 3. Handle response
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status}`);
       }
@@ -414,8 +420,8 @@ const systemPrompt = buildSystemPrompt(character, {
 
 ### **4. API Request**
 ```typescript
-// Send to Claude API
-const response = await ClaudeAPI.generateCharacterResponse(
+// Send to Google Gemini API
+const response = await GoogleAI.generateCharacterResponse(
   character, userMessage, conversationHistory, characterMemory
 );
 ```
@@ -598,7 +604,7 @@ headers: {
 ### **Environment Variables**
 ```bash
 # API Configuration
-NEXT_PUBLIC_API_BASE_URL=https://api-relay.applied-ai.zynga.com/v0/chat/low_level_converse
+NEXT_PUBLIC_API_BASE_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
 NEXT_PUBLIC_API_TOKEN=your_bearer_token_here
 
 # Game Configuration

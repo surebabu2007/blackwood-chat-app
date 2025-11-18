@@ -3,7 +3,7 @@
  * Uses AI to intelligently detect abuse and inappropriate content based on context and intent
  */
 
-import { ClaudeAPI } from './api';
+import { GoogleAI } from './api';
 
 export interface LLMAbuseDetectionResult {
   isAbusive: boolean;
@@ -56,7 +56,7 @@ Analyze this message:`;
    */
   static async detectAbuse(message: string, characterName: string): Promise<LLMAbuseDetectionResult> {
     try {
-      const response = await ClaudeAPI.generateAbuseDetectionResponse(message);
+      const response = await GoogleAI.generateAbuseDetectionResponse(message);
       
       // Parse the JSON response
       let result: LLMAbuseDetectionResult;

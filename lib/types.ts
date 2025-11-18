@@ -78,17 +78,36 @@ export interface APIResponse {
   success: boolean;
   message: string;
   data?: any;
+  text?: string;
   error?: string;
   retryable?: boolean;
 }
 
-export interface ClaudeAPIRequest {
-  system: Array<{ text: string }>;
-  messages: Array<{
-    role: 'user' | 'assistant';
-    content: Array<{ text: string }>;
-  }>;
+export type GenerativeRole = 'user' | 'model' | 'system';
+
+export interface GenerativePart {
+  text: string;
+}
+
+export interface GenerativeContent {
+  role: GenerativeRole;
+  parts: GenerativePart[];
+}
+
+export interface GenerativeAPIRequest {
   model: string;
+  contents: GenerativeContent[];
+  systemInstruction?: GenerativeContent;
+  generationConfig?: {
+    temperature?: number;
+    topK?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+  };
+  safetySettings?: Array<{
+    category: string;
+    threshold: string;
+  }>;
 }
 
 export interface CharacterMemory {

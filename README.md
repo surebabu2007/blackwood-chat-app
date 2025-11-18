@@ -23,7 +23,7 @@ An immersive interactive chatbot system for the Blackwood Manor murder mystery, 
 - **Accessibility**: Keyboard navigation and screen reader support
 
 ### 🧠 AI-Powered Intelligence
-- **Claude Sonnet 4 Integration**: Advanced AI for natural character responses
+- **Google Gemini Integration**: Fast, multi-modal character responses powered by Gemini 1.5 Flash
 - **Context Awareness**: Characters respond based on investigation progress
 - **Memory Persistence**: Conversations build on previous interactions
 - **Emotional Intelligence**: Characters show appropriate emotional responses
@@ -33,7 +33,7 @@ An immersive interactive chatbot system for the Blackwood Manor murder mystery, 
 - **Frontend**: Next.js 14, React 18, TypeScript
 - **Styling**: Tailwind CSS, Framer Motion
 - **State Management**: Zustand with persistence
-- **AI Integration**: Claude Sonnet 4 API
+- **AI Integration**: Google Generative Language API (Gemini)
 - **Icons**: Lucide React
 
 ## Installation
@@ -137,11 +137,11 @@ An immersive interactive chatbot system for the Blackwood Manor murder mystery, 
 
 ## API Integration
 
-The system integrates with Claude Sonnet 4 for intelligent character responses:
+The system integrates with Google Gemini for intelligent character responses:
 
 ```typescript
 // Example API call
-const response = await ClaudeAPI.generateCharacterResponse(
+const response = await GoogleAI.generateCharacterResponse(
   character,
   userMessage,
   conversationHistory,
@@ -211,12 +211,13 @@ This is a Hackathon 2025 project by Suresh Pydikondala.
 Always use environment variables for sensitive data:
 ```bash
 # ✅ Good - Use environment variables
-NEXT_PUBLIC_API_URL=${API_URL}
-NEXT_PUBLIC_BEARER_TOKEN=${API_TOKEN}
+AI_SERVICE_API_KEY=${GOOGLE_OR_PROVIDER_KEY}
+AI_SERVICE_API_BASE_URL=${OPTIONAL_PROVIDER_BASE}
+NEXT_PUBLIC_API_BASE_URL=${PUBLIC_PROXY_URL}
 
 # ❌ Bad - Hardcoded credentials
-NEXT_PUBLIC_API_URL=https://api.example.com
-NEXT_PUBLIC_BEARER_TOKEN=actual_token_here
+AI_SERVICE_API_KEY=AIzaSy...
+AI_SERVICE_API_BASE_URL=https://generativelanguage.googleapis.com/...
 ```
 
 ## Support
@@ -230,5 +231,5 @@ For support and questions:
 
 - Character designs based on the Blackwood Manor murder mystery
 - UI inspiration from modern chat applications
-- AI integration powered by Claude Sonnet 4
+- AI integration powered by Google Gemini
 - Built with Next.js and React ecosystem

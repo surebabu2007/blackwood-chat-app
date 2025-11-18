@@ -12,7 +12,7 @@
 const response = await fetch('/api/chat', {
   body: JSON.stringify({
     message: prompt,
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'gemini-1.5-flash-latest',
     system_prompt: '...'
   })
 });

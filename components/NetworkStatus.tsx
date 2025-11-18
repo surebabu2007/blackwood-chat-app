@@ -39,15 +39,15 @@ export const NetworkStatus: React.FC<NetworkStatusProps> = ({ onNetworkChange })
       if (navigator.onLine) {
         try {
           const start = performance.now();
-          await fetch('https://api-relay.applied-ai.zynga.com/v0/health', {
-            method: 'HEAD',
-            mode: 'no-cors',
+          const response = await fetch('/api/health', {
+            method: 'GET',
+            mode: 'cors',
             cache: 'no-cache'
           });
           const end = performance.now();
           const latency = end - start;
           
-          if (latency < 500) {
+          if (response.ok && latency < 500) {
             setConnectionQuality('good');
           } else {
             setConnectionQuality('poor');

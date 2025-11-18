@@ -183,7 +183,7 @@ const availableCharacters = CharacterAvailabilityManager.getAvailableCharacters(
 ### 2. Response Generation
 ```typescript
 // Timeline context is automatically included in API calls
-const response = await ClaudeAPI.generateCharacterResponse(
+const response = await GoogleAI.generateCharacterResponse(
   character,
   userMessage,
   conversationHistory,

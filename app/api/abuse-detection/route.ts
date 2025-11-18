@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For now, return a simple fallback response
-    // In a real implementation, this would call Claude API directly
+    // In a real implementation, this would call the Google Generative AI endpoint directly
     const fallbackResponse: {
       isAbusive: boolean;
       isIrrelevant: boolean;

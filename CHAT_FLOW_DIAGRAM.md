@@ -60,19 +60,19 @@
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                            API REQUEST CONSTRUCTION                            │
 │  ┌─────────────────────────────────────────────────────────────────────────────┐ │
-│  │ const request: ClaudeAPIRequest = {                                        │ │
-│  │   system: [{ text: systemPrompt }],                                       │ │
-│  │   messages: [                                                              │ │
+│  │ const request: GenerativeAPIRequest = {                                    │ │
+│  │   model: 'gemini-1.5-flash-latest',                                        │ │
+│  │   systemInstruction: { role: 'system', parts: [{ text: systemPrompt }] },  │ │
+│  │   contents: [                                                              │ │
 │  │     ...conversationHistory.slice(-10).map(msg => ({                       │ │
-│  │       role: msg.type === 'user' ? 'user' : 'assistant',                   │ │
-│  │       content: [{ text: msg.content }]                                    │ │
+│  │       role: msg.type === 'user' ? 'user' : 'model',                       │ │
+│  │       parts: [{ text: msg.content }]                                      │ │
 │  │     })),                                                                   │ │
 │  │     {                                                                      │ │
 │  │       role: 'user',                                                        │ │
-│  │       content: [{ text: userMessage }]                                    │ │
+│  │       parts: [{ text: userMessage }]                                      │ │
 │  │     }                                                                      │ │
-│  │   ],                                                                       │ │
-│  │   model: 'claude-4-sonnet'                                                │ │
+│  │   ]                                                                        │ │
 │  │ };                                                                         │ │
 │  └─────────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────┬───────────────────────────────────────────────────────────┘
@@ -82,7 +82,7 @@
 │                            API COMMUNICATION                                   │
 │  ┌─────────────────────────────────────────────────────────────────────────────┐ │
 │  │ 1. Add 30-second timeout                                                  │ │
-│  │ 2. Send POST request to Claude API                                        │ │
+│  │ 2. Send POST request to Google Generative Language API                    │ │
 │  │ 3. Handle response with error checking                                    │ │
 │  │ 4. Extract content from nested response structure                         │ │
 │  │                                                                            │ │

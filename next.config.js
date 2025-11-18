@@ -1,5 +1,15 @@
+const hasServerApiKey = Boolean(
+  process.env.AI_SERVICE_API_KEY ||
+  process.env.GOOGLE_API_KEY ||
+  process.env.NEXT_PUBLIC_API_TOKEN
+);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_HAS_SERVER_API_KEY: hasServerApiKey ? 'true' : 'false',
+  },
+
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react']

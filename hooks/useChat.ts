@@ -3,7 +3,6 @@
 import React, { useState, useCallback } from 'react';
 import { Character, Message } from '@/lib/types';
 import { useChatStore } from '@/lib/store';
-import { ClaudeAPI } from '@/lib/api';
 import { TimelineManager } from '@/lib/timeline';
 import { CharacterStatusManager } from '@/lib/characterStatus';
 import { SimpleAbuseDetection } from '@/lib/simpleAbuseDetection';
@@ -31,6 +30,63 @@ export const useChat = () => {
     investigationState,
     gameState
   } = useChatStore();
+
+  const requestCharacterReply = useCallback(async (
+    characterId: string,
+    message: string,
+    conversationHistory: Message[],
+    context: Record<string, unknown> | null
+  ): Promise<string> => {
+    const payload = {
+      character: characterId,
+      message,
+      conversationHistory,
+      context
+    };
+
+    const invokeEndpoint = async (endpoint: string) => {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Request to ${endpoint} failed with status ${response.status}`);
+      }
+
+      return response.json();
+    };
+
+    try {
+      const primary = await invokeEndpoint('/api/chat');
+      if (primary.success && primary.response) {
+        return primary.response;
+      }
+
+      // If primary failed with a clear error (like API key issue), don't try fallback
+      if (primary.error && (primary.error.includes('API key') || primary.error.includes('authentication') || primary.error.includes('API key not configured'))) {
+        throw new Error(primary.error);
+      }
+
+      // Try fallback only if primary didn't have a critical error
+      const fallback = await invokeEndpoint('/api/chat-fallback');
+      if (fallback.success && fallback.response) {
+        return fallback.response;
+      }
+
+      throw new Error(primary.error || fallback.error || 'Unable to generate response');
+    } catch (err) {
+      // Re-throw with better error message
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new Error('Unable to generate response. Please check your API configuration.');
+    }
+  }, []);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!currentCharacter || isLoading) return;
@@ -119,33 +175,28 @@ export const useChat = () => {
       // Get character context
       const characterMemory = useChatStore.getState().getCharacterMemory(currentCharacter.id);
       
-      // Generate character response
-      const response = await ClaudeAPI.generateCharacterResponse(
-        currentCharacter,
+      const memoryContext = (characterMemory || {}) as Record<string, unknown>;
+
+      const reply = await requestCharacterReply(
+        currentCharacter.id,
         content,
         conversationHistory,
-        characterMemory || {}
+        memoryContext
       );
 
-      if (response.success && response.data) {
-        // Extract response content from the actual API response format
-        const responseContent = response.data.data?.output?.message?.content?.[0]?.text || 
-          response.data.content?.[0]?.text || 
-          response.data.message || 
-          "I'm not sure how to respond to that.";
+      if (reply) {
 
         // Validate response against timeline constraints
         const validation = TimelineManager.validateCharacterResponse(
           currentCharacter.id, 
-          responseContent, 
+          reply, 
           currentCharacter.trustLevel
         );
 
-        let finalResponse = responseContent;
+        let finalResponse = reply;
         if (!validation.isValid) {
           console.warn('Response validation failed:', validation.violations);
-          // Filter out forbidden content or adjust response
-          finalResponse = filterResponseContent(responseContent, validation.violations);
+          finalResponse = filterResponseContent(reply, validation.violations);
         }
 
         // Create character message
@@ -168,16 +219,13 @@ export const useChat = () => {
         });
 
         // Check for evidence or clues in the response
-        checkForEvidence(responseContent);
+        checkForEvidence(reply);
         
-        // Update investigation progress and timeline
+        // Update investigation progress (store updates timeline internally)
         updateInvestigationProgress();
         
-        // Update timeline manager with current progress
-        TimelineManager.updateProgress(gameState.investigationProgress);
-        
       } else {
-        throw new Error(response.error || 'Failed to generate response');
+        throw new Error('Failed to generate response');
       }
     } catch (err) {
       console.error('Error sending message:', err);
@@ -197,7 +245,7 @@ export const useChat = () => {
       setTyping(false);
       setIsLoading(false);
     }
-  }, [currentCharacter, isLoading, addMessage, setTyping, getConversationHistory, updateCharacterMemory, addEvidence, addSuspect, updateRelationshipScore, addInvestigationNote, investigationState, gameState]);
+  }, [currentCharacter, isLoading, addMessage, setTyping, getConversationHistory, updateCharacterMemory, addEvidence, addSuspect, updateRelationshipScore, addInvestigationNote, investigationState, gameState, requestCharacterReply]);
 
   const determineEmotionalTone = (content: string, character: Character): string => {
     const contentLower = content.toLowerCase();
