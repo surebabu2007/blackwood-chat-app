@@ -27,7 +27,7 @@ const DEFAULT_SAFETY_SETTINGS = [
 const resolveApiKey = () => {
   return process.env.AI_SERVICE_API_KEY ||
     process.env.GOOGLE_API_KEY ||
-    'AIzaSyCEaksTkJH6591yzLdpVms3HHFDGzYdNq0';
+    '';
 };
 
 export class GoogleAI {
